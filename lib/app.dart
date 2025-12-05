@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:wheels_flutter/screens/onboarding_screen/splash_screen.dart';
+import 'package:wheels_flutter/screens/splash_screen.dart';
 
 class App extends StatelessWidget {
   const App({super.key});
