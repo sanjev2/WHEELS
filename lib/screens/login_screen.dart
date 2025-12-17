@@ -20,6 +20,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController passwordController = TextEditingController();
 
   bool obscurePassword = true;
+  bool rememberMe = false;
 
   @override
   void dispose() {
@@ -84,7 +85,6 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -105,6 +105,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             'Welcome!',
                             textAlign: TextAlign.center,
                             style: TextStyle(
+                              fontFamily: 'Inter Bold',
                               color: Colors.green,
                               fontSize: 30,
                               fontWeight: FontWeight.bold,
@@ -156,7 +157,26 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                         validator: validatePassword,
                       ),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 12),
+
+                      Row(
+                        children: [
+                          Checkbox(
+                            value: rememberMe,
+                            onChanged: (value) {
+                              setState(() {
+                                rememberMe = value ?? false;
+                              });
+                            },
+                          ),
+                          const Text(
+                            "Remember Me",
+                            style: TextStyle(fontSize: 14),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 10),
 
                       SizedBox(
                         height: 52,

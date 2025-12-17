@@ -9,15 +9,9 @@ class MyButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ElevatedButton(
-      style: ElevatedButton.styleFrom(
-        backgroundColor: Colors.green,
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-      ),
+      style: Theme.of(context).elevatedButtonTheme.style,
       onPressed: onPressed,
-      child: Text(
-        text,
-        style: const TextStyle(color: Colors.white, fontSize: 20),
-      ),
+      child: Text(text),
     );
   }
 }
