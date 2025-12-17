@@ -1,86 +1,60 @@
 import 'package:flutter/material.dart';
-import 'package:wheels_flutter/screens/login_screen.dart';
+import 'package:wheels_flutter/screens/buttom%20screens/account_screen.dart';
+import 'package:wheels_flutter/screens/buttom%20screens/home_screen.dart';
+import 'package:wheels_flutter/screens/buttom%20screens/my_orders_screen.dart';
+import 'package:wheels_flutter/screens/buttom%20screens/services_screen.dart';
 
-class DashboardScreen extends StatelessWidget {
+class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
 
-  void _logout(BuildContext context) {
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (BuildContext context) {
-          return const LoginScreen();
-        },
-      ),
-    );
+  @override
+  State<DashboardScreen> createState() {
+    return _DashboardScreenState();
   }
+}
+
+class _DashboardScreenState extends State<DashboardScreen> {
+  int _currentIndex = 0;
+
+  final List<Widget> _screens = const [
+    HomeScreen(),
+    ServicesScreen(),
+    MyOrdersScreen(),
+    AccountScreen(),
+  ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        title: const Text("Dashboard"),
-        backgroundColor: Colors.green,
-      ),
-      body: Column(
-        children: [
-          Expanded(
-            child: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: const [
-                  Text(
-                    "Welcome to",
-                    style: TextStyle(
-                      fontSize: 22,
-                      color: Colors.grey,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  SizedBox(height: 10),
-                  Text(
-                    "Your Dashboard",
-                    style: TextStyle(
-                      fontSize: 32,
-                      color: Colors.green,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 1.2,
-                      shadows: [
-                        Shadow(
-                          blurRadius: 4,
-                          color: Colors.black26,
-                          offset: Offset(2, 2),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
+      body: _screens[_currentIndex],
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _currentIndex,
+        type: BottomNavigationBarType.fixed,
+        onTap: (int index) {
+          setState(() {
+            _currentIndex = index;
+          });
+        },
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home_outlined),
+            activeIcon: Icon(Icons.home),
+            label: 'Home',
           ),
-
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: SizedBox(
-              width: double.infinity,
-              height: 50,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-                onPressed: () {
-                  _logout(context);
-                },
-                child: const Text(
-                  "Logout",
-                  style: TextStyle(fontSize: 16, color: Colors.white),
-                ),
-              ),
-            ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.car_repair_outlined),
+            activeIcon: Icon(Icons.car_repair),
+            label: 'Services',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.list_alt_outlined),
+            activeIcon: Icon(Icons.list_alt),
+            label: 'My Orders',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person_outline),
+            activeIcon: Icon(Icons.person),
+            label: 'Accounts',
           ),
         ],
       ),

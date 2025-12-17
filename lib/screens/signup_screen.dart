@@ -92,6 +92,7 @@ class _SignupScreenState extends State<SignupScreen> {
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
                                   color: Colors.green,
+                                  fontFamily: 'Inter Bold',
                                   fontSize: 28,
                                   fontWeight: FontWeight.bold,
                                 ),
