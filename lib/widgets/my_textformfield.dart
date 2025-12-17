@@ -23,10 +23,7 @@ class MyTextFormField extends StatelessWidget {
       onChanged: onChanged,
       validator: validator,
       keyboardType: keyboardType,
-      decoration: InputDecoration(
-        labelText: label,
-        border: const OutlineInputBorder(),
-      ),
+      decoration: InputDecoration(labelText: label),
     );
   }
 }
