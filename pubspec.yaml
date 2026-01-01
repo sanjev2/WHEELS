@@ -31,6 +31,21 @@ dependencies:
   flutter:
     sdk: flutter
 
+# Clean Architecture Essentials
+  flutter_riverpod: ^2.4.9
+  riverpod_annotation: ^2.3.4
+  dartz: ^0.10.1
+  equatable: ^2.0.5
+  get_it: ^7.6.4
+
+
+  # Database
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
+  path_provider: ^2.1.1
+  uuid: ^3.0.7
+  # Navigation
+  go_router: ^13.0.1
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
@@ -38,7 +53,13 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  uuid: ^4.3.1
+  
+  # Code Generation
+  build_runner: ^2.4.13
+  hive_generator: ^2.0.1
+  riverpod_generator: ^2.3.10
+  riverpod_lint: ^2.3.5
+  
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is

@@ -1,0 +1,20 @@
+
+import 'package:flutter/material.dart';
+import 'package:wheels_flutter/app/theme/color.dart';
+
+AppBarTheme getAppBarTheme() {
+  return const AppBarTheme(
+    centerTitle: true,
+    elevation: 0,
+    scrolledUnderElevation: 4,
+    backgroundColor: AppColors.primaryGreen,
+    shadowColor: Colors.black,
+    titleTextStyle: TextStyle(
+      fontFamily: 'Inter Bold',
+      fontSize: 20,
+      fontWeight: FontWeight.bold,
+      color: Colors.white,
+    ),
+    iconTheme: IconThemeData(color: Colors.white),
+  );
+}
