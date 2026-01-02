@@ -67,7 +67,6 @@ class AuthLocalDatasource implements IAuthDatasource {
   @override
   Future<AuthHiveModel> signup(AuthHiveModel user) async {
     try {
-      // Check if user already exists with this email
       final existing = _userBox.values
           .where((u) => u.email == user.email)
           .toList();
@@ -76,7 +75,6 @@ class AuthLocalDatasource implements IAuthDatasource {
         throw Exception('User already exists with this email');
       }
 
-      // Check if username already exists
       final existingUsername = _userBox.values
           .where((u) => u.username == user.username)
           .toList();
@@ -85,7 +83,6 @@ class AuthLocalDatasource implements IAuthDatasource {
         throw Exception('Username already taken');
       }
 
-      // Create new user with logged-in status
       final newUser = AuthHiveModel(
         userId: user.userId,
         fullName: user.fullName,
@@ -152,8 +149,6 @@ class AuthLocalDatasource implements IAuthDatasource {
     }
   }
 
-  // Additional helper methods
-
   Future<List<AuthHiveModel>> getAllUsers() async {
     try {
       return _userBox.values.toList();
@@ -181,7 +176,6 @@ class AuthLocalDatasource implements IAuthDatasource {
     }
   }
 
-  // Check if email exists
   Future<bool> emailExists(String email) async {
     try {
       return _userBox.values.any((user) => user.email == email);
@@ -190,7 +184,6 @@ class AuthLocalDatasource implements IAuthDatasource {
     }
   }
 
-  // Clear all users (for testing)
   Future<void> clearAllUsers() async {
     try {
       await _userBox.clear();

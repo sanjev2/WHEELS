@@ -5,5 +5,5 @@ abstract interface class IAuthDatasource {
   Future<AuthHiveModel> signup(AuthHiveModel user);
   Future<void> logout();
   Future<AuthHiveModel?> getCurrentUser();
-  Future<bool> isUserLoggedIn();
+  Future<bool> isUserLoggedn();
 }
