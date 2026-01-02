@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:wheels_flutterapp/theme/color.dart';
+import 'package:wheels_flutter/app/theme/color.dart';
 
 InputDecorationTheme getInputDecorationTheme() {
   return InputDecorationTheme(

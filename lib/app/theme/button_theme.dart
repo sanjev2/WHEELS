@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:wheels_flutter/app/theme/color.dat';
+import 'package:wheels_flutter/app/theme/color.dart';
 
 ElevatedButtonThemeData getElevatedButtonTheme() {
   return ElevatedButtonThemeData(

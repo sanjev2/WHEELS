@@ -1,4 +1,4 @@
-import 'package:flutter/material.dat';
+import 'package:flutter/material.dart';
 
 class AppColors {
   AppColors._();

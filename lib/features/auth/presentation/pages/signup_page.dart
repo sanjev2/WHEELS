@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:wheels_flutter/core/utils/snackbar_helper.dart';
@@ -25,6 +26,8 @@ class _SignupPageState extends ConsumerState<SignupPage> {
 
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
+  String? _errorMessage;
+  Timer? _errorTimer;
 
   @override
   void dispose() {
@@ -34,11 +37,42 @@ class _SignupPageState extends ConsumerState<SignupPage> {
     _addressController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
+    _errorTimer?.cancel();
     super.dispose();
+  }
+
+  void _showError(String message) {
+    setState(() {
+      _errorMessage = message;
+    });
+
+    // Cancel any existing timer
+    _errorTimer?.cancel();
+
+    // Set a new timer to clear the error after 5 seconds
+    _errorTimer = Timer(const Duration(seconds: 5), () {
+      if (mounted) {
+        setState(() {
+          _errorMessage = null;
+        });
+      }
+    });
+  }
+
+  void _clearError() {
+    _errorTimer?.cancel();
+    if (mounted) {
+      setState(() {
+        _errorMessage = null;
+      });
+    }
   }
 
   Future<void> _signUp() async {
     if (!_formKey.currentState!.validate()) return;
+
+    // Clear any existing error
+    _clearError();
 
     // Call signup method from auth provider
     await ref
@@ -67,11 +101,7 @@ class _SignupPageState extends ConsumerState<SignupPage> {
         MaterialPageRoute(builder: (_) => const LoginPage()),
       );
     } else if (authState.errorMessage != null) {
-      mySnackBar(
-        context: context,
-        message: authState.errorMessage!,
-        color: Colors.red,
-      );
+      _showError(authState.errorMessage!);
     }
   }
 
@@ -122,10 +152,12 @@ class _SignupPageState extends ConsumerState<SignupPage> {
                     prefixIcon: Icon(Icons.person),
                   ),
                   validator: (value) {
-                    if (value == null || value.trim().isEmpty)
+                    if (value == null || value.trim().isEmpty) {
                       return 'Full name is required';
+                    }
                     return null;
                   },
+                  onChanged: (_) => _clearError(),
                 ),
                 const SizedBox(height: 16),
 
@@ -139,12 +171,15 @@ class _SignupPageState extends ConsumerState<SignupPage> {
                   ),
                   keyboardType: TextInputType.emailAddress,
                   validator: (value) {
-                    if (value == null || value.trim().isEmpty)
+                    if (value == null || value.trim().isEmpty) {
                       return 'Email is required';
-                    if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value))
+                    }
+                    if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
                       return 'Enter a valid email';
+                    }
                     return null;
                   },
+                  onChanged: (_) => _clearError(),
                 ),
                 const SizedBox(height: 16),
 
@@ -158,10 +193,12 @@ class _SignupPageState extends ConsumerState<SignupPage> {
                   ),
                   keyboardType: TextInputType.phone,
                   validator: (value) {
-                    if (value == null || value.trim().isEmpty)
+                    if (value == null || value.trim().isEmpty) {
                       return 'Contact number is required';
+                    }
                     return null;
                   },
+                  onChanged: (_) => _clearError(),
                 ),
                 const SizedBox(height: 16),
 
@@ -174,10 +211,12 @@ class _SignupPageState extends ConsumerState<SignupPage> {
                     prefixIcon: Icon(Icons.location_on),
                   ),
                   validator: (value) {
-                    if (value == null || value.trim().isEmpty)
+                    if (value == null || value.trim().isEmpty) {
                       return 'Address is required';
+                    }
                     return null;
                   },
+                  onChanged: (_) => _clearError(),
                 ),
                 const SizedBox(height: 16),
 
@@ -200,12 +239,15 @@ class _SignupPageState extends ConsumerState<SignupPage> {
                     ),
                   ),
                   validator: (value) {
-                    if (value == null || value.isEmpty)
+                    if (value == null || value.isEmpty) {
                       return 'Password is required';
-                    if (value.length < 6)
+                    }
+                    if (value.length < 6) {
                       return 'Password must be at least 6 characters';
+                    }
                     return null;
                   },
+                  onChanged: (_) => _clearError(),
                 ),
                 const SizedBox(height: 16),
 
@@ -230,23 +272,54 @@ class _SignupPageState extends ConsumerState<SignupPage> {
                     ),
                   ),
                   validator: (value) {
-                    if (value == null || value.isEmpty)
+                    if (value == null || value.isEmpty) {
                       return 'Please confirm your password';
-                    if (value != _passwordController.text)
+                    }
+                    if (value != _passwordController.text) {
                       return 'Passwords do not match';
+                    }
                     return null;
                   },
+                  onChanged: (_) => _clearError(),
                 ),
                 const SizedBox(height: 24),
 
-                // Error Message
-                if (authState.errorMessage != null)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 16),
-                    child: Text(
-                      authState.errorMessage!,
-                      style: const TextStyle(color: Colors.red, fontSize: 14),
-                      textAlign: TextAlign.center,
+                // Error Message with auto-disappear
+                if (_errorMessage != null)
+                  Container(
+                    margin: const EdgeInsets.only(bottom: 16),
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.red.shade50,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.red.shade100),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.error_outline,
+                          color: Colors.red.shade600,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            _errorMessage!,
+                            style: TextStyle(
+                              color: Colors.red.shade700,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ),
+                        GestureDetector(
+                          onTap: _clearError,
+                          child: Icon(
+                            Icons.close,
+                            color: Colors.red.shade600,
+                            size: 18,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
 
