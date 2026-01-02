@@ -9,7 +9,7 @@ AppBarTheme getAppBarTheme() {
     backgroundColor: AppColors.primaryGreen,
     shadowColor: Colors.black,
     titleTextStyle: TextStyle(
-      fontFamily: 'Inter Bold',
+      fontFamily: 'Inter Bol',
       fontSize: 20,
       fontWeight: FontWeight.bold,
       color: Colors.white,

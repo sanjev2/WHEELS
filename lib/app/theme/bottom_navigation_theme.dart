@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:wheels_flutter/app/theme/color.dart';
+import 'package:wheels_flutter/app/theme/color.dat';
 
 BottomNavigationBarThemeData getBottomNavigationTheme() {
   return const BottomNavigationBarThemeData(

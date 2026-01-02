@@ -17,10 +17,12 @@ class HiveService {
     await Hive.initFlutter();
 
     // Register adapters
-    if (!Hive.isAdapterRegistered(0))
+    if (!Hive.isAdapterRegistered(0)) {
       Hive.registerAdapter(AuthHiveModelAdapter());
-    if (!Hive.isAdapterRegistered(1))
+    }
+    if (!Hive.isAdapterRegistered(1)) {
       Hive.registerAdapter(BatchHiveModelAdapter());
+    }
 
     // Open boxes
     _userBox = await Hive.openBox<AuthHiveModel>(HiveTableConstant.userTable);
