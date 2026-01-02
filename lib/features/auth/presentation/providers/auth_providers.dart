@@ -41,7 +41,6 @@ final authViewModelProvider = StateNotifierProvider<AuthViewModel, AuthState>((
   );
 });
 
-// ========== AUTH STATE PROVIDERS (Optional) ==========
 final authStatusProvider = Provider<AuthStatus>((ref) {
   return ref.watch(authViewModelProvider).status;
 });
@@ -54,7 +53,6 @@ final isAuthenticatedProvider = Provider<bool>((ref) {
   return ref.watch(authViewModelProvider).isAuthenticated;
 });
 
-// ========== HELPER PROVIDERS ==========
 final authErrorProvider = Provider<String?>((ref) {
   return ref.watch(authViewModelProvider).errorMessage;
 });
