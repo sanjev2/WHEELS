@@ -10,7 +10,6 @@ class BatchLocalDatasource implements IBatchDatasource {
   BatchLocalDatasource({required HiveService hiveService})
     : _hiveService = hiveService;
 
-  // Direct access to the batch box (assumes HiveService already initialized)
   Box<BatchHiveModel> get _batchBox => _hiveService.batchBox;
 
   @override

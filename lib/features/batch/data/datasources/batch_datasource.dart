@@ -7,3 +7,5 @@ abstract interface class IBatchDatasource {
   Future<bool> updateBatch(BatchHiveModel batch);
   Future<bool> deleteBatch(String batchId);
 }
+
+//
