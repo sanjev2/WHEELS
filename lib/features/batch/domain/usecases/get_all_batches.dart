@@ -9,6 +9,7 @@ class GetAllBatchUsecase implements UsecaseWithoutParams<List<BatchEntity>> {
 
   GetAllBatchUsecase({required IBatchRepository batchRepository})
     : _batchRepository = batchRepository;
+  //
 
   @override
   Future<Either<Failure, List<BatchEntity>>> call() {

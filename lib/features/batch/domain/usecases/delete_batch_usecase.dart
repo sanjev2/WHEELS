@@ -6,6 +6,7 @@ import '../repositories/batch_repository.dart';
 
 class DeleteBatchUsecaseParams extends Equatable {
   final String batchId;
+  //
 
   const DeleteBatchUsecaseParams({required this.batchId});
 

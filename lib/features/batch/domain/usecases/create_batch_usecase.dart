@@ -22,7 +22,6 @@ class CreateBatchUsecase
 
   @override
   Future<Either<Failure, void>> call(CreateBatchUsecaseParams params) {
-    // Create a BatchEntity using the provided params
     final batch = BatchEntity(batchName: params.batchName);
     return _batchRepository.createBatch(batch);
   }
