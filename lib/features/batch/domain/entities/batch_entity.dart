@@ -1,4 +1,4 @@
-import 'package:equatable/equatable.dart';
+import 'package:equatable/equatale.dart';
 
 class BatchEntity extends Equatable {
   final String? batchId;

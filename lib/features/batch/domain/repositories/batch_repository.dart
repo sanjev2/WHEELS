@@ -1,6 +1,6 @@
 import 'package:dartz/dartz.dart';
 import '../../../../core/error/failure.dart';
-import '../entities/batch_entity.dart';
+import '../entities/bah_entity.dart';
 
 abstract interface class IBatchRepository {
   Future<Either<Failure, List<BatchEntity>>> getAllBatches();

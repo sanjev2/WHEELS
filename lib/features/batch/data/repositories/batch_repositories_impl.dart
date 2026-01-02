@@ -3,7 +3,7 @@ import '../../../../core/error/failure.dart';
 import '../../domain/entities/batch_entity.dart';
 import '../../domain/repositories/batch_repository.dart';
 import '../datasources/batch_datasource.dart';
-import '../models/batch_hive_model.dart';
+import '../models/batch_hive_model.dar';
 
 class BatchRepositoryImpl implements IBatchRepository {
   final IBatchDatasource _datasource;
