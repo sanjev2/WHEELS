@@ -24,7 +24,6 @@ class AuthLocalDatasource implements IAuthDatasource {
 
       if (users.isEmpty) return null;
 
-      // Set all users to logged out first
       final allUsers = _userBox.values.toList();
       for (final u in allUsers) {
         await _userBox.put(
