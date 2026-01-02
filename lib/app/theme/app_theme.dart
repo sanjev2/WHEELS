@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:wheels_flutter/other/theme/input_decoration_theme.dart';
+import 'package:wheels_flutter/app/theme/input_decoration.dart';
 import 'app_bar_theme.dart';
 import 'bottom_navigation_theme.dart';
 import 'button_theme.dart';
@@ -13,13 +13,11 @@ class AppTheme {
       brightness: Brightness.light,
     ),
 
-    // Apply all your theme parts
     appBarTheme: getAppBarTheme(),
     bottomNavigationBarTheme: getBottomNavigationTheme(),
     elevatedButtonTheme: getElevatedButtonTheme(),
     inputDecorationTheme: getInputDecorationTheme(),
 
-    // Text Theme
     textTheme: const TextTheme(
       displayLarge: TextStyle(
         fontFamily: 'Inter Bold',
