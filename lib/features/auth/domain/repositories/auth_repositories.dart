@@ -7,4 +7,5 @@ abstract interface class IAuthRepository {
   Future<Either<Failure, AuthEntity>> signup(AuthEntity user);
   Future<Either<Failure, void>> logout();
   Future<Either<Failure, AuthEntity?>> getCurrentUser();
+  //
 }

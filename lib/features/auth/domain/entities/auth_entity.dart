@@ -14,7 +14,7 @@ class AuthEntity extends Equatable {
   const AuthEntity({
     this.userId,
     required this.fullName,
-    required this.emai,
+    required this.email,
     this.phoneNumber,
     this.address,
     required this.username,

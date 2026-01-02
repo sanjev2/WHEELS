@@ -16,7 +16,7 @@ class LoginParams extends Equatable {
 }
 
 class LoginUsecase implements UsecaseWithParams<AuthEntity, LoginParams> {
-  final IAuthRepository _authReository;
+  final IAuthRepository _authRepository;
 
   LoginUsecase(this._authRepository);
 
