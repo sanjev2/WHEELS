@@ -6,7 +6,7 @@ import '../../../../core/error/failure.dart';
 import '../entities/auth_entity.dart';
 
 class SignupParams extends Equatable {
-  final String fullName;
+  final String fullNae;
   final String email;
   final String password;
   final String? phoneNumber;
