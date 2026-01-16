@@ -1,3 +1,4 @@
+// features/auth/presentation/pages/signup_page.dart
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -15,14 +16,13 @@ class SignupPage extends ConsumerStatefulWidget {
 }
 
 class _SignupPageState extends ConsumerState<SignupPage> {
-  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-  final TextEditingController _fullNameController = TextEditingController();
-  final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _phoneController = TextEditingController();
-  final TextEditingController _addressController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _confirmPasswordController =
-      TextEditingController();
+  final _formKey = GlobalKey<FormState>();
+  final _nameController = TextEditingController(); // Changed from fullName
+  final _emailController = TextEditingController();
+  final _contactController = TextEditingController(); // Changed from phone
+  final _addressController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
 
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
@@ -31,9 +31,9 @@ class _SignupPageState extends ConsumerState<SignupPage> {
 
   @override
   void dispose() {
-    _fullNameController.dispose();
+    _nameController.dispose();
     _emailController.dispose();
-    _phoneController.dispose();
+    _contactController.dispose();
     _addressController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
@@ -46,55 +46,44 @@ class _SignupPageState extends ConsumerState<SignupPage> {
       _errorMessage = message;
     });
 
-    // Cancel any existing timer
     _errorTimer?.cancel();
-
-    // Set a new timer to clear the error after 5 seconds
     _errorTimer = Timer(const Duration(seconds: 5), () {
       if (mounted) {
-        setState(() {
-          _errorMessage = null;
-        });
+        setState(() => _errorMessage = null);
       }
     });
   }
 
   void _clearError() {
     _errorTimer?.cancel();
-    if (mounted) {
-      setState(() {
-        _errorMessage = null;
-      });
-    }
+    if (mounted) setState(() => _errorMessage = null);
   }
 
-  Future<void> _signUp() async {
-    if (!_formKey.currentState!.validate()) return;
+  Future<void> _register() async {
+    if (!(_formKey.currentState?.validate() ?? false)) return;
 
-    // Clear any existing error
     _clearError();
 
-    // Call signup method from auth provider
+    // ✅ Updated register call
     await ref
         .read(authViewModelProvider.notifier)
-        .signup(
-          fullName: _fullNameController.text.trim(),
+        .register(
+          name: _nameController.text.trim(),
           email: _emailController.text.trim(),
           password: _passwordController.text,
-          phoneNumber: _phoneController.text.trim(),
+          contact: _contactController.text.trim(),
           address: _addressController.text.trim(),
         );
 
     final authState = ref.read(authViewModelProvider);
 
-    if (authState.isAuthenticated) {
+    if (authState.status == AuthStatus.registered) {
       mySnackBar(
         context: context,
         message: 'Account created successfully!',
         color: Colors.green,
       );
 
-      // Wait a moment and navigate to Dashboard
       await Future.delayed(const Duration(seconds: 1));
       Navigator.pushReplacement(
         context,
@@ -115,6 +104,7 @@ class _SignupPageState extends ConsumerState<SignupPage> {
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authViewModelProvider);
+    final isLoading = authState.status == AuthStatus.loading;
 
     return Scaffold(
       body: SafeArea(
@@ -143,9 +133,9 @@ class _SignupPageState extends ConsumerState<SignupPage> {
                 ),
                 const SizedBox(height: 30),
 
-                // Full Name
+                // Name Field
                 TextFormField(
-                  controller: _fullNameController,
+                  controller: _nameController,
                   decoration: const InputDecoration(
                     labelText: 'Full Name',
                     border: OutlineInputBorder(),
@@ -161,7 +151,7 @@ class _SignupPageState extends ConsumerState<SignupPage> {
                 ),
                 const SizedBox(height: 16),
 
-                // Email Address
+                // Email Field
                 TextFormField(
                   controller: _emailController,
                   decoration: const InputDecoration(
@@ -183,9 +173,9 @@ class _SignupPageState extends ConsumerState<SignupPage> {
                 ),
                 const SizedBox(height: 16),
 
-                // Contact Number
+                // Contact Field
                 TextFormField(
-                  controller: _phoneController,
+                  controller: _contactController,
                   decoration: const InputDecoration(
                     labelText: 'Contact Number',
                     border: OutlineInputBorder(),
@@ -202,7 +192,7 @@ class _SignupPageState extends ConsumerState<SignupPage> {
                 ),
                 const SizedBox(height: 16),
 
-                // Address
+                // Address Field
                 TextFormField(
                   controller: _addressController,
                   decoration: const InputDecoration(
@@ -220,7 +210,7 @@ class _SignupPageState extends ConsumerState<SignupPage> {
                 ),
                 const SizedBox(height: 16),
 
-                // Password
+                // Password Field
                 TextFormField(
                   controller: _passwordController,
                   obscureText: _obscurePassword,
@@ -239,19 +229,17 @@ class _SignupPageState extends ConsumerState<SignupPage> {
                     ),
                   ),
                   validator: (value) {
-                    if (value == null || value.isEmpty) {
+                    if (value == null || value.isEmpty)
                       return 'Password is required';
-                    }
-                    if (value.length < 6) {
+                    if (value.length < 6)
                       return 'Password must be at least 6 characters';
-                    }
                     return null;
                   },
                   onChanged: (_) => _clearError(),
                 ),
                 const SizedBox(height: 16),
 
-                // Confirm Password
+                // Confirm Password Field
                 TextFormField(
                   controller: _confirmPasswordController,
                   obscureText: _obscureConfirmPassword,
@@ -272,19 +260,17 @@ class _SignupPageState extends ConsumerState<SignupPage> {
                     ),
                   ),
                   validator: (value) {
-                    if (value == null || value.isEmpty) {
+                    if (value == null || value.isEmpty)
                       return 'Please confirm your password';
-                    }
-                    if (value != _passwordController.text) {
+                    if (value != _passwordController.text)
                       return 'Passwords do not match';
-                    }
                     return null;
                   },
                   onChanged: (_) => _clearError(),
                 ),
                 const SizedBox(height: 24),
 
-                // Error Message with auto-disappear
+                // Error Message
                 if (_errorMessage != null)
                   Container(
                     margin: const EdgeInsets.only(bottom: 16),
@@ -325,13 +311,9 @@ class _SignupPageState extends ConsumerState<SignupPage> {
 
                 // Create Account Button
                 MyButton(
-                  onPressed: authState.status == AuthStatus.loading
-                      ? null
-                      : _signUp,
-                  text: authState.status == AuthStatus.loading
-                      ? 'Creating Account...'
-                      : 'Create Account',
-                  isLoading: authState.status == AuthStatus.loading,
+                  onPressed: isLoading ? null : _register,
+                  text: isLoading ? 'Creating Account...' : 'Create Account',
+                  isLoading: isLoading,
                   height: 50,
                 ),
 

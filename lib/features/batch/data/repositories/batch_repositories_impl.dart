@@ -1,84 +1,37 @@
 import 'package:dartz/dartz.dart';
-import '../../../../core/error/failure.dart';
-import '../../domain/entities/batch_entity.dart';
-import '../../domain/repositories/batch_repository.dart';
-import '../datasources/batch_datasource.dart';
-import '../models/batch_hive_model.dart';
+import 'package:wheels_flutter/core/error/failure.dart';
+import 'package:wheels_flutter/features/batch/data/datasources/batch_datasource.dart';
+import 'package:wheels_flutter/features/batch/domain/entities/batch_entity.dart';
+import 'package:wheels_flutter/features/batch/domain/repositories/batch_repository.dart';
 
 class BatchRepositoryImpl implements IBatchRepository {
-  final IBatchDatasource _datasource;
+  final IBatchDatasource _dataSource;
 
-  BatchRepositoryImpl(this._datasource);
+  BatchRepositoryImpl({required IBatchDatasource dataSource})
+    : _dataSource = dataSource;
 
   @override
-  Future<Either<Failure, List<BatchEntity>>> getAllBatches() async {
-    try {
-      final models = await _datasource.getAllBatches();
-      final entities = BatchHiveModel.toEntityList(models);
-      return Right(entities);
-    } catch (e) {
-      return Left(LocalDatabaseFailure(message: 'Failed to get batches: $e'));
-    }
+  Future<Either<Failure, List<BatchEntity>>> getAllBatches() {
+    return _dataSource.getAllBatches();
   }
 
   @override
-  Future<Either<Failure, BatchEntity>> getBatchById(String batchId) async {
-    try {
-      final model = await _datasource.getBatchById(batchId);
-      if (model != null) {
-        return Right(model.toEntity());
-      } else {
-        return Left(LocalDatabaseFailure(message: 'Batch not found'));
-      }
-    } catch (e) {
-      return Left(LocalDatabaseFailure(message: 'Failed to get batch: $e'));
-    }
+  Future<Either<Failure, bool>> createBatch(BatchEntity batch) {
+    return _dataSource.createBatch(batch);
   }
 
   @override
-  Future<Either<Failure, bool>> createBatch(BatchEntity batch) async {
-    try {
-      final model = BatchHiveModel.fromEntity(batch);
-      final result = await _datasource.createBatch(model);
-      if (result) {
-        return const Right(true);
-      }
-      return const Left(
-        LocalDatabaseFailure(message: 'Failed to create batch'),
-      );
-    } catch (e) {
-      return Left(LocalDatabaseFailure(message: 'Failed to create batch: $e'));
-    }
+  Future<Either<Failure, bool>> deleteBatch(String batchId) {
+    return _dataSource.deleteBatch(batchId);
   }
 
   @override
-  Future<Either<Failure, bool>> updateBatch(BatchEntity batch) async {
-    try {
-      final model = BatchHiveModel.fromEntity(batch);
-      final result = await _datasource.updateBatch(model);
-      if (result) {
-        return const Right(true);
-      }
-      return const Left(
-        LocalDatabaseFailure(message: 'Failed to update batch'),
-      );
-    } catch (e) {
-      return Left(LocalDatabaseFailure(message: 'Failed to update batch: $e'));
-    }
+  Future<Either<Failure, BatchEntity>> getBatchById(String id) {
+    return _dataSource.getBatchById(id);
   }
 
   @override
-  Future<Either<Failure, bool>> deleteBatch(String batchId) async {
-    try {
-      final result = await _datasource.deleteBatch(batchId);
-      if (result) {
-        return const Right(true);
-      }
-      return const Left(
-        LocalDatabaseFailure(message: 'Failed to delete batch'),
-      );
-    } catch (e) {
-      return Left(LocalDatabaseFailure(message: 'Failed to delete batch: $e'));
-    }
+  Future<Either<Failure, bool>> updateBatch(BatchEntity batch) {
+    return _dataSource.updateBatch(batch);
   }
 }

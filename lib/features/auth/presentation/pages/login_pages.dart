@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:wheels_flutter/core/utils/snackbar_helper.dart';
 import 'package:wheels_flutter/core/widgets/my_buttons.dart';
 import 'package:wheels_flutter/features/auth/presentation/providers/auth_providers.dart';
+import 'package:wheels_flutter/features/auth/presentation/state/auth_state.dart';
 import 'package:wheels_flutter/features/dashboard/dahsboard_page.dart';
 import 'package:wheels_flutter/features/auth/presentation/pages/signup_page.dart';
 import 'dart:async';
@@ -58,32 +59,34 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   }
 
   Future<void> _login() async {
-    if (_formKey.currentState?.validate() ?? false) {
-      // Clear any existing error
-      _clearError();
+    if (!(_formKey.currentState?.validate() ?? false)) return;
 
-      // Call login on the StateNotifier
-      await ref
-          .read(authViewModelProvider.notifier)
-          .login(_emailController.text.trim(), _passwordController.text);
+    _clearError();
 
-      final authState = ref.read(authViewModelProvider);
-
-      if (authState.isAuthenticated) {
-        mySnackBar(
-          context: context,
-          message: "Login successful!",
-          color: Colors.green,
+    // Call login on the NotifierProvider
+    await ref
+        .read(authViewModelProvider.notifier)
+        .login(
+          email: _emailController.text.trim(),
+          password: _passwordController.text,
         );
 
-        await Future.delayed(const Duration(seconds: 1));
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const DashboardPage()),
-        );
-      } else if (authState.errorMessage != null) {
-        _showError(authState.errorMessage!);
-      }
+    final authState = ref.read(authViewModelProvider);
+
+    if (authState.status == AuthStatus.authenticated) {
+      mySnackBar(
+        context: context,
+        message: "Login successful!",
+        color: Colors.green,
+      );
+
+      await Future.delayed(const Duration(seconds: 1));
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const DashboardPage()),
+      );
+    } else if (authState.errorMessage != null) {
+      _showError(authState.errorMessage!);
     }
   }
 
@@ -96,9 +99,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
-    // Watch auth state
     final authState = ref.watch(authViewModelProvider);
-    final isLoading = ref.watch(authLoadingProvider);
+    final isLoading = authState.status == AuthStatus.loading;
 
     return Scaffold(
       body: SafeArea(
@@ -140,8 +142,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                           }
                           return null;
                         },
-                        onChanged: (_) =>
-                            _clearError(), // Clear error when user starts typing
+                        onChanged: (_) => _clearError(),
                       ),
                       const SizedBox(height: 20),
                       TextFormField(
@@ -166,12 +167,11 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                           }
                           return null;
                         },
-                        onChanged: (_) =>
-                            _clearError(), // Clear error when user starts typing
+                        onChanged: (_) => _clearError(),
                       ),
                       const SizedBox(height: 20),
 
-                      // Error message with auto-disappear
+                      // Error message
                       if (_errorMessage != null)
                         Container(
                           margin: const EdgeInsets.only(bottom: 10),

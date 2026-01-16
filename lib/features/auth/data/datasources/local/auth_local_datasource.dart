@@ -1,9 +1,22 @@
+// features/auth/data/datasources/local/auth_local_datasource.dart
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
 import 'package:wheels_flutter/core/constants/hive_constants.dart';
+import 'package:wheels_flutter/core/services/storage/user_session.dart';
 import '../../models/auth_hive_model.dart';
 import '../auth_datasource.dart';
 
+final authLocalDatasourceProvider = Provider<IAuthDatasource>((ref) {
+  final userSessionService = ref.read(userSessionServiceProvider);
+  return AuthLocalDatasource(userSessionService: userSessionService);
+});
+
 class AuthLocalDatasource implements IAuthDatasource {
+  final UserSessionService _userSessionService;
+
+  AuthLocalDatasource({required UserSessionService userSessionService})
+    : _userSessionService = userSessionService;
+
   Box<AuthHiveModel> get _userBox =>
       Hive.box<AuthHiveModel>(HiveTableConstant.userTable);
 
@@ -15,50 +28,55 @@ class AuthLocalDatasource implements IAuthDatasource {
     }
   }
 
+  AuthHiveModel _copyWithLoginState(
+    AuthHiveModel user, {
+    required bool isLoggedIn,
+  }) {
+    return AuthHiveModel(
+      userId: user.userId,
+      name: user.name,
+      email: user.email,
+      contact: user.contact,
+      address: user.address,
+      password: user.password,
+      isLoggedIn: isLoggedIn,
+      createdAt: user.createdAt,
+    );
+  }
+
   @override
   Future<AuthHiveModel?> login(String email, String password) async {
     try {
-      final users = _userBox.values
-          .where((user) => user.email == email && user.password == password)
-          .toList();
-
-      if (users.isEmpty) return null;
-
-      final allUsers = _userBox.values.toList();
-      for (final u in allUsers) {
-        await _userBox.put(
-          u.userId,
-          AuthHiveModel(
-            userId: u.userId,
-            fullName: u.fullName,
-            email: u.email,
-            phoneNumber: u.phoneNumber,
-            address: u.address,
-            username: u.username,
-            password: u.password,
-            isLoggedIn: false,
-            createdAt: u.createdAt,
-          ),
-        );
-      }
-
-      final user = users.first;
-      final loggedInUser = AuthHiveModel(
-        userId: user.userId,
-        fullName: user.fullName,
-        email: user.email,
-        phoneNumber: user.phoneNumber,
-        address: user.address,
-        username: user.username,
-        password: user.password,
-        isLoggedIn: true,
-        createdAt: user.createdAt,
+      final matchedUsers = _userBox.values.where(
+        (u) =>
+            u.email.toLowerCase() == email.toLowerCase() &&
+            u.password == password,
       );
 
+      if (matchedUsers.isEmpty) return null;
+
+      // Logout all users first
+      for (final u in _userBox.values) {
+        await _userBox.put(u.userId, _copyWithLoginState(u, isLoggedIn: false));
+      }
+
+      final user = matchedUsers.first;
+      final loggedInUser = _copyWithLoginState(user, isLoggedIn: true);
+
       await _userBox.put(user.userId, loggedInUser);
+
+      // Save session
+      await _userSessionService.saveUserSession(
+        userId: user.userId,
+        email: user.email,
+        name: user.name,
+        contact: user.contact,
+        address: user.address,
+      );
+
       return loggedInUser;
     } catch (e) {
-      print('Login error: $e');
+      print('Local login error: $e');
       return null;
     }
   }
@@ -66,39 +84,35 @@ class AuthLocalDatasource implements IAuthDatasource {
   @override
   Future<AuthHiveModel> signup(AuthHiveModel user) async {
     try {
-      final existing = _userBox.values
-          .where((u) => u.email == user.email)
-          .toList();
+      final emailExists = _userBox.values.any(
+        (u) => u.email.toLowerCase() == user.email.toLowerCase(),
+      );
 
-      if (existing.isNotEmpty) {
+      if (emailExists) {
         throw Exception('User already exists with this email');
       }
 
-      final existingUsername = _userBox.values
-          .where((u) => u.username == user.username)
-          .toList();
-
-      if (existingUsername.isNotEmpty) {
-        throw Exception('Username already taken');
+      // Logout all existing users
+      for (final u in _userBox.values) {
+        await _userBox.put(u.userId, _copyWithLoginState(u, isLoggedIn: false));
       }
 
-      final newUser = AuthHiveModel(
-        userId: user.userId,
-        fullName: user.fullName,
-        email: user.email,
-        phoneNumber: user.phoneNumber,
-        address: user.address,
-        username: user.username,
-        password: user.password,
-        isLoggedIn: true,
-        createdAt: user.createdAt,
-      );
+      final newUser = _copyWithLoginState(user, isLoggedIn: true);
 
       await _userBox.put(newUser.userId, newUser);
-      print('✅ User created: ${newUser.email}');
+
+      // Save session
+      await _userSessionService.saveUserSession(
+        userId: newUser.userId,
+        email: newUser.email,
+        name: newUser.name,
+        contact: newUser.contact,
+        address: newUser.address,
+      );
+
       return newUser;
     } catch (e) {
-      print('Signup error: $e');
+      print('Local signup error: $e');
       rethrow;
     }
   }
@@ -111,19 +125,10 @@ class AuthLocalDatasource implements IAuthDatasource {
 
       await _userBox.put(
         currentUser.userId,
-        AuthHiveModel(
-          userId: currentUser.userId,
-          fullName: currentUser.fullName,
-          email: currentUser.email,
-          phoneNumber: currentUser.phoneNumber,
-          address: currentUser.address,
-          username: currentUser.username,
-          password: currentUser.password,
-          isLoggedIn: false,
-          createdAt: currentUser.createdAt,
-        ),
+        _copyWithLoginState(currentUser, isLoggedIn: false),
       );
-      print('✅ User logged out');
+
+      await _userSessionService.clearSession();
     } catch (e) {
       print('Logout error: $e');
     }
@@ -142,53 +147,9 @@ class AuthLocalDatasource implements IAuthDatasource {
   @override
   Future<bool> isUserLoggedIn() async {
     try {
-      return _userBox.values.any((user) => user.isLoggedIn);
+      return _userSessionService.isLoggedIn();
     } catch (_) {
       return false;
-    }
-  }
-
-  Future<List<AuthHiveModel>> getAllUsers() async {
-    try {
-      return _userBox.values.toList();
-    } catch (e) {
-      print('Get all users error: $e');
-      return [];
-    }
-  }
-
-  Future<void> deleteUser(String userId) async {
-    try {
-      await _userBox.delete(userId);
-      print('✅ User deleted: $userId');
-    } catch (e) {
-      print('Delete user error: $e');
-    }
-  }
-
-  Future<void> updateUser(AuthHiveModel user) async {
-    try {
-      await _userBox.put(user.userId, user);
-      print('✅ User updated: ${user.email}');
-    } catch (e) {
-      print('Update user error: $e');
-    }
-  }
-
-  Future<bool> emailExists(String email) async {
-    try {
-      return _userBox.values.any((user) => user.email == email);
-    } catch (_) {
-      return false;
-    }
-  }
-
-  Future<void> clearAllUsers() async {
-    try {
-      await _userBox.clear();
-      print('✅ All users cleared');
-    } catch (e) {
-      print('Clear users error: $e');
     }
   }
 }

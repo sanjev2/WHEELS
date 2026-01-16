@@ -1,35 +1,38 @@
 import 'package:equatable/equatable.dart';
 import 'package:wheels_flutter/features/auth/domain/entities/auth_entity.dart';
 
-enum AuthStatus { initial, loading, success, error }
+enum AuthStatus {
+  initial,
+  loading,
+  authenticated,
+  unauthenticated,
+  registered,
+  error,
+}
 
 class AuthState extends Equatable {
   final AuthStatus status;
-  final AuthEntity? user;
+  final AuthEntity? authEntity;
   final String? errorMessage;
-  final bool isAuthenticated;
 
   const AuthState({
     this.status = AuthStatus.initial,
-    this.user,
+    this.authEntity,
     this.errorMessage,
-    this.isAuthenticated = false,
   });
 
   AuthState copyWith({
     AuthStatus? status,
-    AuthEntity? user,
+    AuthEntity? authEntity,
     String? errorMessage,
-    bool? isAuthenticated,
   }) {
     return AuthState(
       status: status ?? this.status,
-      user: user ?? this.user,
+      authEntity: authEntity ?? this.authEntity,
       errorMessage: errorMessage ?? this.errorMessage,
-      isAuthenticated: isAuthenticated ?? this.isAuthenticated,
     );
   }
 
   @override
-  List<Object?> get props => [status, user, errorMessage, isAuthenticated];
+  List<Object?> get props => [status, authEntity, errorMessage];
 }

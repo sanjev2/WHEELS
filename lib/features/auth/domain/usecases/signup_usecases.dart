@@ -1,46 +1,62 @@
+// features/auth/domain/usecases/register_usecase.dart
 import 'package:dartz/dartz.dart';
 import 'package:equatable/equatable.dart';
+import 'package:wheels_flutter/core/error/failure.dart';
 import 'package:wheels_flutter/core/usercases/usecases.dart';
+import 'package:wheels_flutter/features/auth/domain/entities/auth_entity.dart';
 import 'package:wheels_flutter/features/auth/domain/repositories/auth_repositories.dart';
-import '../../../../core/error/failure.dart';
-import '../entities/auth_entity.dart';
 
-class SignupParams extends Equatable {
-  final String fullName;
+class RegisterParams extends Equatable {
+  final String name;
   final String email;
   final String password;
-  final String? phoneNumber;
-  final String? address;
+  final String confirmPassword;
+  final String contact;
+  final String address;
+  final String role; // ← add this
 
-  const SignupParams({
-    required this.fullName,
+  const RegisterParams({
+    required this.name,
     required this.email,
     required this.password,
-    this.phoneNumber,
-    this.address,
+    required this.confirmPassword,
+    required this.contact,
+    required this.address,
+    this.role = "user", // default
   });
 
   @override
-  List<Object?> get props => [fullName, email, password, phoneNumber, address];
+  List<Object?> get props => [
+    name,
+    email,
+    password,
+    confirmPassword,
+    contact,
+    address,
+    role, // ← include role
+  ];
 }
 
-class SignupUsecase implements UsecaseWithParams<AuthEntity, SignupParams> {
+class RegisterUsecase implements UsecaseWithParams<bool, RegisterParams> {
   final IAuthRepository _authRepository;
 
-  SignupUsecase(this._authRepository);
+  RegisterUsecase({required IAuthRepository authRepository})
+    : _authRepository = authRepository;
 
   @override
-  Future<Either<Failure, AuthEntity>> call(SignupParams params) async {
-    final user = AuthEntity(
-      fullName: params.fullName,
+  Future<Either<Failure, bool>> call(RegisterParams params) {
+    final entity = AuthEntity(
+      userId: null,
+      name: params.name,
       email: params.email,
-      phoneNumber: params.phoneNumber,
-      address: params.address,
-      username: params.email, // Using email as username
       password: params.password,
-      isLoggedIn: true,
+      confirmPassword: params.confirmPassword,
+      contact: params.contact,
+      address: params.address,
+      isLoggedIn: false,
+      role: params.role, // ← now dynamic
     );
 
-    return await _authRepository.signup(user);
+    return _authRepository.register(entity);
   }
 }
