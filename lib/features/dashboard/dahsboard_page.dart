@@ -252,7 +252,7 @@ class DashboardHome extends ConsumerWidget {
                         icon: Icons.person_outline,
                         title: 'Profile',
                         subtitle: 'Manage account',
-                        onTap: () => onGoToTab(3), //  tab navigation
+                        onTap: () => onGoToTab(3),
                         wide: true,
                       ),
                     ),
@@ -283,7 +283,7 @@ class DashboardHome extends ConsumerWidget {
               icon: Icons.support_agent_outlined,
               title: 'Need help?',
               subtitle: 'Chat with support for quick guidance',
-              onTap: () => onGoToTab(3), //  go to Profile (support entry point)
+              onTap: () => onGoToTab(3),
             ),
           ],
         ),
