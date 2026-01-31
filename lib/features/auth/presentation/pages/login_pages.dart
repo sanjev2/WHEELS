@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:wheels_flutter/app/theme/color.dart';
 import 'package:wheels_flutter/core/utils/snackbar_helper.dart';
 import 'package:wheels_flutter/core/widgets/my_buttons.dart';
 import 'package:wheels_flutter/features/auth/presentation/providers/auth_providers.dart';
 import 'package:wheels_flutter/features/auth/presentation/state/auth_state.dart';
-import 'package:wheels_flutter/features/dashboard/dahsboard_page.dart';
 import 'package:wheels_flutter/features/auth/presentation/pages/signup_page.dart';
-import 'dart:async';
+import 'package:wheels_flutter/features/dashboard/dahsboard_page.dart';
 
 class LoginPage extends ConsumerStatefulWidget {
   const LoginPage({super.key});
@@ -17,53 +17,71 @@ class LoginPage extends ConsumerStatefulWidget {
 
 class _LoginPageState extends ConsumerState<LoginPage> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+
+  final FocusNode _emailFocus = FocusNode();
+  final FocusNode _passwordFocus = FocusNode();
+
   bool _obscurePassword = true;
-  String? _errorMessage;
-  Timer? _errorTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _emailFocus.addListener(() => setState(() {}));
+    _passwordFocus.addListener(() => setState(() {}));
+  }
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
-    _errorTimer?.cancel();
+    _emailFocus.dispose();
+    _passwordFocus.dispose();
     super.dispose();
   }
 
-  void _showError(String message) {
-    setState(() {
-      _errorMessage = message;
-    });
-
-    // Cancel any existing timer
-    _errorTimer?.cancel();
-
-    // Set a new timer to clear the error after 5 seconds
-    _errorTimer = Timer(const Duration(seconds: 5), () {
-      if (mounted) {
-        setState(() {
-          _errorMessage = null;
-        });
-      }
-    });
-  }
-
-  void _clearError() {
-    _errorTimer?.cancel();
-    if (mounted) {
-      setState(() {
-        _errorMessage = null;
-      });
-    }
+  InputDecoration _pillDecoration({
+    required String hint,
+    required IconData icon,
+    Widget? suffixIcon,
+  }) {
+    return InputDecoration(
+      hintText: hint,
+      hintStyle: const TextStyle(
+        color: AppColors.textTertiary,
+        fontWeight: FontWeight.w500,
+      ),
+      prefixIcon: Icon(icon, color: AppColors.textSecondary),
+      suffixIcon: suffixIcon,
+      filled: true,
+      fillColor: AppColors.surfaceGreen,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(26),
+        borderSide: const BorderSide(color: AppColors.borderLight),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(26),
+        borderSide: const BorderSide(color: AppColors.primaryGreen, width: 1.6),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(26),
+        borderSide: const BorderSide(color: AppColors.error),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(26),
+        borderSide: const BorderSide(color: AppColors.error, width: 1.6),
+      ),
+    );
   }
 
   Future<void> _login() async {
+    FocusScope.of(context).unfocus();
+
     if (!(_formKey.currentState?.validate() ?? false)) return;
 
-    _clearError();
-
-    // Call login on the NotifierProvider
     await ref
         .read(authViewModelProvider.notifier)
         .login(
@@ -72,6 +90,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
         );
 
     final authState = ref.read(authViewModelProvider);
+    if (!mounted) return;
 
     if (authState.status == AuthStatus.authenticated) {
       mySnackBar(
@@ -80,20 +99,26 @@ class _LoginPageState extends ConsumerState<LoginPage> {
         color: Colors.green,
       );
 
-      await Future.delayed(const Duration(seconds: 1));
+      await Future.delayed(const Duration(milliseconds: 700));
+      if (!mounted) return;
+
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => const DashboardPage()),
       );
-    } else if (authState.errorMessage != null) {
-      _showError(authState.errorMessage!);
+    } else {
+      mySnackBar(
+        context: context,
+        message: authState.errorMessage ?? "Login failed. Please try again.",
+        color: Colors.red,
+      );
     }
   }
 
   void _goToSignup() {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => const SignupPage()),
+      MaterialPageRoute(builder: (_) => const SignupPage()),
     );
   }
 
@@ -102,147 +127,223 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     final authState = ref.watch(authViewModelProvider);
     final isLoading = authState.status == AuthStatus.loading;
 
-    return Scaffold(
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: Column(
-            children: [
-              Expanded(
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      const SizedBox(height: 60),
-                      Text(
-                        'Welcome Back!',
-                        style: TextStyle(
-                          fontSize: 30,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.green[700],
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 8),
-                      const Text(
-                        'Sign in to continue',
-                        style: TextStyle(fontSize: 15, color: Colors.grey),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 40),
-                      TextFormField(
-                        controller: _emailController,
-                        decoration: const InputDecoration(
-                          labelText: 'Email Address',
-                        ),
-                        validator: (val) {
-                          if (val == null || val.isEmpty) {
-                            return 'Email is required';
-                          }
-                          return null;
-                        },
-                        onChanged: (_) => _clearError(),
-                      ),
-                      const SizedBox(height: 20),
-                      TextFormField(
-                        controller: _passwordController,
-                        obscureText: _obscurePassword,
-                        decoration: InputDecoration(
-                          labelText: 'Password',
-                          suffixIcon: IconButton(
-                            icon: Icon(
-                              _obscurePassword
-                                  ? Icons.visibility_off
-                                  : Icons.visibility,
-                            ),
-                            onPressed: () => setState(
-                              () => _obscurePassword = !_obscurePassword,
-                            ),
-                          ),
-                        ),
-                        validator: (val) {
-                          if (val == null || val.isEmpty) {
-                            return 'Password is required';
-                          }
-                          return null;
-                        },
-                        onChanged: (_) => _clearError(),
-                      ),
-                      const SizedBox(height: 20),
+    final size = MediaQuery.of(context).size;
+    final isSmall = size.height < 700;
 
-                      // Error message
-                      if (_errorMessage != null)
-                        Container(
-                          margin: const EdgeInsets.only(bottom: 10),
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: Colors.red.shade50,
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: Colors.red.shade100),
+    return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      body: SafeArea(
+        top: true,
+        bottom: false,
+        child: GestureDetector(
+          onTap: () => FocusScope.of(context).unfocus(),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 440),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  mainAxisAlignment:
+                      MainAxisAlignment.start, // ✅ start instead of center
+                  children: [
+                    SizedBox(height: isSmall ? 4 : 8), // ✅ small gap only
+                    // Logo (smaller + tighter)
+                    SizedBox(
+                      height: isSmall ? 200 : 200,
+                      child: Image.asset(
+                        'assets/images/logo2.png',
+                        fit: BoxFit.contain,
+                      ),
+                    ),
+
+                    SizedBox(height: isSmall ? 10 : 14),
+
+                    // Card
+                    Container(
+                      padding: EdgeInsets.fromLTRB(
+                        18,
+                        isSmall ? 18 : 22,
+                        18,
+                        18,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(26),
+                        border: Border.all(
+                          color: AppColors.borderLight.withOpacity(0.6),
+                        ),
+                        boxShadow: const [
+                          BoxShadow(
+                            color: Color(0x14000000),
+                            blurRadius: 26,
+                            offset: Offset(0, 16),
                           ),
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.error_outline,
-                                color: Colors.red.shade600,
-                                size: 20,
+                        ],
+                      ),
+                      child: Form(
+                        key: _formKey,
+                        child: Column(
+                          children: [
+                            Text(
+                              "Welcome back!",
+                              textAlign: TextAlign.center,
+                              style: Theme.of(context).textTheme.titleLarge
+                                  ?.copyWith(
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.w800,
+                                    color: AppColors.textPrimary,
+                                  ),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              "Sign in to continue",
+                              textAlign: TextAlign.center,
+                              style: Theme.of(context).textTheme.bodyMedium
+                                  ?.copyWith(
+                                    color: AppColors.textTertiary,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                            ),
+                            const SizedBox(height: 18),
+
+                            _AnimatedField(
+                              isFocused: _emailFocus.hasFocus,
+                              glowColor: AppColors.primaryGreen,
+                              child: TextFormField(
+                                controller: _emailController,
+                                focusNode: _emailFocus,
+                                keyboardType: TextInputType.emailAddress,
+                                textInputAction: TextInputAction.next,
+                                decoration: _pillDecoration(
+                                  hint: "Email Address",
+                                  icon: Icons.email_outlined,
+                                ),
+                                validator: (val) {
+                                  if (val == null || val.trim().isEmpty)
+                                    return "Email is required";
+                                  return null;
+                                },
+                                onFieldSubmitted: (_) => FocusScope.of(
+                                  context,
+                                ).requestFocus(_passwordFocus),
                               ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  _errorMessage!,
-                                  style: TextStyle(
-                                    color: Colors.red.shade700,
-                                    fontSize: 14,
+                            ),
+                            const SizedBox(height: 14),
+
+                            _AnimatedField(
+                              isFocused: _passwordFocus.hasFocus,
+                              glowColor: AppColors.primaryGreen,
+                              child: TextFormField(
+                                controller: _passwordController,
+                                focusNode: _passwordFocus,
+                                obscureText: _obscurePassword,
+                                textInputAction: TextInputAction.done,
+                                decoration: _pillDecoration(
+                                  hint: "Password",
+                                  icon: Icons.lock_outline_rounded,
+                                  suffixIcon: IconButton(
+                                    icon: Icon(
+                                      _obscurePassword
+                                          ? Icons.visibility_off
+                                          : Icons.visibility,
+                                      color: AppColors.textSecondary,
+                                    ),
+                                    onPressed: () => setState(
+                                      () =>
+                                          _obscurePassword = !_obscurePassword,
+                                    ),
                                   ),
                                 ),
+                                validator: (val) {
+                                  if (val == null || val.isEmpty)
+                                    return "Password is required";
+                                  return null;
+                                },
+                                onFieldSubmitted: (_) =>
+                                    isLoading ? null : _login(),
                               ),
-                              GestureDetector(
-                                onTap: _clearError,
-                                child: Icon(
-                                  Icons.close,
-                                  color: Colors.red.shade600,
-                                  size: 18,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
+                            ),
 
-                      const SizedBox(height: 20),
-                      MyButton(
-                        onPressed: isLoading ? null : _login,
-                        text: isLoading ? 'Logging in...' : 'Login',
-                        isLoading: isLoading,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.only(bottom: 32),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Text("Don't have an account? "),
-                    GestureDetector(
-                      onTap: _goToSignup,
-                      child: Text(
-                        "Sign Up",
-                        style: TextStyle(
-                          color: Colors.green[700],
-                          fontWeight: FontWeight.bold,
+                            const SizedBox(height: 18),
+
+                            MyButton(
+                              onPressed: isLoading ? null : _login,
+                              text: isLoading ? "Logging in..." : "Login",
+                              isLoading: isLoading,
+                              height: 54,
+                            ),
+                          ],
                         ),
                       ),
                     ),
+
+                    const SizedBox(height: 14),
+
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Text(
+                          "Don't have an account? ",
+                          style: TextStyle(
+                            color: AppColors.textSecondary,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        GestureDetector(
+                          onTap: _goToSignup,
+                          child: const Text(
+                            "Sign Up",
+                            style: TextStyle(
+                              color: AppColors.primaryGreen,
+                              fontWeight: FontWeight.w800,
+                              decoration: TextDecoration.underline,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    SizedBox(height: isSmall ? 10 : 16),
                   ],
                 ),
               ),
-            ],
+            ),
           ),
         ),
       ),
+    );
+  }
+}
+
+class _AnimatedField extends StatelessWidget {
+  final bool isFocused;
+  final Color glowColor;
+  final Widget child;
+
+  const _AnimatedField({
+    required this.isFocused,
+    required this.glowColor,
+    required this.child,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 160),
+      curve: Curves.easeOut,
+      transform: Matrix4.translationValues(0, isFocused ? -2 : 0, 0),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(26),
+        boxShadow: [
+          BoxShadow(
+            color: isFocused ? glowColor.withOpacity(0.10) : Colors.transparent,
+            blurRadius: 18,
+            offset: const Offset(0, 12),
+          ),
+        ],
+      ),
+      child: child,
     );
   }
 }
