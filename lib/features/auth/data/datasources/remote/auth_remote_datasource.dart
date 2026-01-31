@@ -60,7 +60,6 @@ class AuthRemoteDatasource implements IAuthRemoteDatasource {
 
         final user = AuthApiModel.fromJson(Map<String, dynamic>.from(userJson));
 
-        // ✅ Save session for profile screen (matches your session fields)
         await _userSessionService.saveUserSession(
           userId: user.authId ?? "",
           email: user.email,
@@ -69,8 +68,6 @@ class AuthRemoteDatasource implements IAuthRemoteDatasource {
           address: user.address,
         );
 
-        // ✅ Save profile picture filename if exists
-        // (Only works after you add saveProfilePicture() to UserSessionService)
         if (user.profilePicture != null && user.profilePicture!.isNotEmpty) {
           await _userSessionService.saveProfilePicture(user.profilePicture!);
         }
@@ -105,8 +102,7 @@ class AuthRemoteDatasource implements IAuthRemoteDatasource {
     try {
       final response = await _apiClient.post(
         ApiEndpoints.Register, // /auth/signup
-        data: user
-            .toJson(), // ✅ sends only name/email/contact/address/password/role
+        data: user.toJson(),
       );
 
       if (response.data["success"] == true) {
@@ -119,7 +115,6 @@ class AuthRemoteDatasource implements IAuthRemoteDatasource {
           Map<String, dynamic>.from(userJson),
         );
 
-        // ✅ Optional: store user details right away (you can keep this)
         await _userSessionService.saveUserSession(
           userId: created.authId ?? "",
           email: created.email,
@@ -171,7 +166,6 @@ class AuthRemoteDatasource implements IAuthRemoteDatasource {
 
         final me = AuthApiModel.fromJson(Map<String, dynamic>.from(userJson));
 
-        // ✅ refresh local session
         await _userSessionService.saveUserSession(
           userId: me.authId ?? "",
           email: me.email,
@@ -229,10 +223,8 @@ class AuthRemoteDatasource implements IAuthRemoteDatasource {
           throw Exception("Upload succeeded but filename missing");
         }
 
-        // ✅ save filename to session
         await _userSessionService.saveProfilePicture(filename);
 
-        // ✅ if backend returns updated user, refresh session too
         final userJson = data?["user"];
         if (userJson != null) {
           final updated = AuthApiModel.fromJson(

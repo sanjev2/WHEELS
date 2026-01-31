@@ -3,18 +3,13 @@ import 'package:wheels_flutter/features/auth/domain/entities/auth_entity.dart';
 
 class AuthApiModel {
   final String? authId;
-
-  // ✅ backend fields
   final String name;
   final String email;
   final String contact;
   final String address;
   final String role;
 
-  // ✅ backend optional (after you add it): profile_picture
   final String? profilePicture;
-
-  // ✅ only for sending (register/login)
   final String? password;
   final String? confirmPassword; // if your backend requires it; else keep null
 
@@ -30,8 +25,6 @@ class AuthApiModel {
     this.confirmPassword,
   });
 
-  /// ✅ SEND TO BACKEND (REGISTER)
-  /// Sends ONLY fields backend accepts.
   Map<String, dynamic> toJson() {
     return {
       "name": name.trim(),
@@ -46,7 +39,6 @@ class AuthApiModel {
     };
   }
 
-  /// ✅ RECEIVE FROM BACKEND
   factory AuthApiModel.fromJson(Map<String, dynamic> json) {
     return AuthApiModel(
       authId: (json["_id"] ?? json["id"] ?? json["authId"])?.toString(),
@@ -60,7 +52,6 @@ class AuthApiModel {
     );
   }
 
-  /// ✅ MAP TO ENTITY (your entity uses same field names)
   AuthEntity toEntity() {
     return AuthEntity(
       userId: authId,
@@ -76,7 +67,6 @@ class AuthApiModel {
     );
   }
 
-  /// ✅ MAP FROM ENTITY
   factory AuthApiModel.fromEntity(AuthEntity entity) {
     return AuthApiModel(
       authId: entity.userId,
