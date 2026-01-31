@@ -40,7 +40,6 @@ final authLoadingProvider = Provider<bool>((ref) {
   return ref.watch(authViewModelProvider).status == AuthStatus.loading;
 });
 
-// ========== CURRENT USER DETAILS ==========
 final currentUserNameProvider = Provider<String?>((ref) {
   final user = ref.watch(currentUserProvider);
   return user?.name;
