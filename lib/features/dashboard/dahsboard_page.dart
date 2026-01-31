@@ -26,7 +26,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
   void initState() {
     super.initState();
 
-    // ✅ No UI changes — only navigation wiring
+    //  No UI changes — only navigation wiring
     _pages = [
       DashboardHome(onGoToTab: _goToTab),
       Container(
@@ -119,13 +119,6 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
   }
 }
 
-// --------------------
-// Home Page (FINAL FIXES)
-// ✅ More gap between header and vehicle container
-// ✅ Vehicle card overflow fixed (horizontal + vertical safety)
-// ✅ Quick actions responsive (no overflow) + Cart added
-// ✅ Navigation wired (tabs + cart page)
-// --------------------
 class DashboardHome extends ConsumerWidget {
   final void Function(int index) onGoToTab;
 
@@ -138,7 +131,6 @@ class DashboardHome extends ConsumerWidget {
 
     final currentUser = ref.watch(currentUserProvider);
 
-    // ✅ Vehicle section height tuned to avoid vertical overflow on small devices
     final double vehicleHeight = width < 360
         ? 340
         : width < 600
@@ -162,10 +154,8 @@ class DashboardHome extends ConsumerWidget {
               },
             ),
 
-            // ✅ requested: more gap between Hi Sanjeev header and the container
             const SizedBox(height: 24),
 
-            // ✅ VEHICLE CONTAINER
             SizedBox(
               height: vehicleHeight,
               child: PageView(
@@ -192,7 +182,6 @@ class DashboardHome extends ConsumerWidget {
 
             const SizedBox(height: 16),
 
-            // Search (UI only) ✅ now navigates to Services tab
             _SearchBar(onTap: () => onGoToTab(1)),
             const SizedBox(height: 16),
 
@@ -206,7 +195,6 @@ class DashboardHome extends ConsumerWidget {
             ),
             const SizedBox(height: 10),
 
-            // ✅ RESPONSIVE Quick Actions
             LayoutBuilder(
               builder: (context, constraints) {
                 const spacing = 12.0;
@@ -232,7 +220,7 @@ class DashboardHome extends ConsumerWidget {
                         icon: Icons.design_services_outlined,
                         title: 'Services',
                         subtitle: 'Explore',
-                        onTap: () => onGoToTab(1), // ✅ tab navigation
+                        onTap: () => onGoToTab(1),
                       ),
                     ),
                     SizedBox(
@@ -241,7 +229,7 @@ class DashboardHome extends ConsumerWidget {
                         icon: Icons.calendar_today_outlined,
                         title: 'Bookings',
                         subtitle: 'My schedule',
-                        onTap: () => onGoToTab(2), // ✅ tab navigation
+                        onTap: () => onGoToTab(2), //  tab navigation
                       ),
                     ),
                     SizedBox(
@@ -264,7 +252,7 @@ class DashboardHome extends ConsumerWidget {
                         icon: Icons.person_outline,
                         title: 'Profile',
                         subtitle: 'Manage account',
-                        onTap: () => onGoToTab(3), // ✅ tab navigation
+                        onTap: () => onGoToTab(3), //  tab navigation
                         wide: true,
                       ),
                     ),
@@ -288,15 +276,14 @@ class DashboardHome extends ConsumerWidget {
               icon: Icons.local_offer_outlined,
               title: 'Seasonal Service Offer',
               subtitle: 'Save on maintenance this week',
-              onTap: () => onGoToTab(1), // ✅ go to Services
+              onTap: () => onGoToTab(1), //  go to Services
             ),
             const SizedBox(height: 10),
             _RecommendationTile(
               icon: Icons.support_agent_outlined,
               title: 'Need help?',
               subtitle: 'Chat with support for quick guidance',
-              onTap: () =>
-                  onGoToTab(3), // ✅ go to Profile (support entry point)
+              onTap: () => onGoToTab(3), //  go to Profile (support entry point)
             ),
           ],
         ),
@@ -304,7 +291,7 @@ class DashboardHome extends ConsumerWidget {
     );
   }
 
-  // ✅ Vehicle card: overflow-proof (vertical + horizontal)
+  //  Vehicle card: overflow-proof (vertical + horizontal)
   Widget _buildVehicleCard(
     BuildContext context,
     Color bgColor,
@@ -316,7 +303,7 @@ class DashboardHome extends ConsumerWidget {
     final width = MediaQuery.of(context).size.width;
     final theme = Theme.of(context);
 
-    // ✅ Slightly reduce image size on very small screens (prevents vertical tightness)
+    //  Slightly reduce image size on very small screens (prevents vertical tightness)
     final double carHeight = width < 360 ? 140 : (width < 600 ? 150 : 170);
 
     return Padding(
@@ -325,7 +312,7 @@ class DashboardHome extends ConsumerWidget {
         alignment: Alignment.topCenter,
         children: [
           Container(
-            // ✅ tuned for more breathing room and less chance of overflow
+            //  tuned for more breathing room and less chance of overflow
             margin: const EdgeInsets.only(top: 62),
             padding: const EdgeInsets.fromLTRB(20, 96, 20, 22),
             decoration: BoxDecoration(
@@ -347,7 +334,7 @@ class DashboardHome extends ConsumerWidget {
                 ),
                 const SizedBox(height: 10),
 
-                // ✅ rows are now overflow-safe (both sides flexible)
+                //  rows are now overflow-safe (both sides flexible)
                 _infoRow('Purchased on', date),
                 _infoRow('Total Distance', distance),
                 _infoRow('Years of use', usage),
@@ -363,7 +350,7 @@ class DashboardHome extends ConsumerWidget {
     );
   }
 
-  // ✅ FIX: both label/value flexible -> no horizontal overflow ever
+  //  FIX: both label/value flexible -> no horizontal overflow ever
   Widget _infoRow(String label, String value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
