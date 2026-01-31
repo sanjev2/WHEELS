@@ -17,7 +17,6 @@ final registerUsecaseProvider = Provider<RegisterUsecase>((ref) {
   return RegisterUsecase(authRepository: authRepository);
 });
 
-// ========== AUTH VIEW MODEL ==========
 final authViewModelProvider = StateNotifierProvider<AuthViewModel, AuthState>(
   (ref) => AuthViewModel(
     loginUsecase: ref.read(loginUsecaseProvider),
@@ -25,7 +24,6 @@ final authViewModelProvider = StateNotifierProvider<AuthViewModel, AuthState>(
   ),
 );
 
-// ========== DERIVED PROVIDERS ==========
 final authStatusProvider = Provider<AuthStatus>((ref) {
   return ref.watch(authViewModelProvider).status;
 });
