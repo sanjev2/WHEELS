@@ -1,31 +1,46 @@
 import 'package:flutter/material.dart';
+import 'package:wheels_flutter/app/theme/color.dart';
 
 class MyButton extends StatelessWidget {
   final VoidCallback? onPressed;
   final String text;
   final bool isLoading;
   final double height;
-  final double? width; // optional width
+  final double? width;
 
   const MyButton({
     super.key,
     required this.onPressed,
     required this.text,
     this.isLoading = false,
-    this.height = 50,
+    this.height = 54,
     this.width,
   });
 
   @override
   Widget build(BuildContext context) {
+    final baseStyle =
+        Theme.of(context).elevatedButtonTheme.style?.textStyle?.resolve({}) ??
+        const TextStyle(inherit: true);
+
     return SizedBox(
       height: height,
-      width: width, // optional width
+      width: width ?? double.infinity,
       child: ElevatedButton(
-        onPressed: onPressed,
-        style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+        onPressed: isLoading ? null : onPressed,
+        style: ElevatedButton.styleFrom(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(18),
+          ),
+          elevation: isLoading ? 0 : 2,
+          shadowColor: AppColors.primaryGreen.withOpacity(0.25),
+        ),
         child: AnimatedSwitcher(
-          duration: const Duration(milliseconds: 200),
+          duration: const Duration(milliseconds: 180),
+          switchInCurve: Curves.easeOut,
+          switchOutCurve: Curves.easeIn,
+          transitionBuilder: (child, anim) =>
+              FadeTransition(opacity: anim, child: child),
           child: isLoading
               ? const SizedBox(
                   key: ValueKey('loader'),
@@ -39,7 +54,7 @@ class MyButton extends StatelessWidget {
               : Text(
                   text,
                   key: const ValueKey('text'),
-                  style: const TextStyle(fontSize: 16),
+                  style: baseStyle.copyWith(inherit: true),
                 ),
         ),
       ),

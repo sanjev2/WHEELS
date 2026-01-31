@@ -6,23 +6,26 @@ class AuthEntity extends Equatable {
   final String name;
   final String email;
   final String? password;
-  final String? confirmPassword; // Make sure this field exists
+  final String? confirmPassword;
   final String contact;
   final String address;
   final bool isLoggedIn;
   final String role;
-  
+
+  // ✅ ADD ONLY THIS
+  final String? profilePicture; // filename from backend: profile_picture
 
   const AuthEntity({
     this.userId,
     required this.name,
     required this.email,
     this.password,
-    this.confirmPassword, // Make sure constructor has this parameter
+    this.confirmPassword,
     required this.contact,
     required this.address,
     this.isLoggedIn = false,
     this.role = "user",
+    this.profilePicture,
   });
 
   AuthEntity copyWith({
@@ -35,6 +38,7 @@ class AuthEntity extends Equatable {
     String? address,
     bool? isLoggedIn,
     String? role,
+    String? profilePicture,
   }) {
     return AuthEntity(
       userId: userId ?? this.userId,
@@ -46,6 +50,7 @@ class AuthEntity extends Equatable {
       address: address ?? this.address,
       isLoggedIn: isLoggedIn ?? this.isLoggedIn,
       role: role ?? this.role,
+      profilePicture: profilePicture ?? this.profilePicture,
     );
   }
 
@@ -60,5 +65,6 @@ class AuthEntity extends Equatable {
     address,
     isLoggedIn,
     role,
+    profilePicture, // ✅ ADD
   ];
 }

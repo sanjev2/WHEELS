@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -17,6 +19,12 @@ abstract class IAuthRemoteDatasource {
   Future<AuthApiModel?> login(String email, String password);
   Future<AuthApiModel> register(AuthApiModel user);
   Future<void> logout();
+
+  // ✅ needed for profile screen
+  Future<AuthApiModel> getMe();
+
+  // ✅ profile picture upload
+  Future<String> uploadProfilePicture(File file);
 }
 
 class AuthRemoteDatasource implements IAuthRemoteDatasource {
@@ -24,77 +32,237 @@ class AuthRemoteDatasource implements IAuthRemoteDatasource {
   final UserSessionService _userSessionService;
   final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
 
+  static const String _tokenKey = "auth_token";
+
   AuthRemoteDatasource({
     required ApiClient apiClient,
     required UserSessionService userSessionService,
   }) : _apiClient = apiClient,
        _userSessionService = userSessionService;
 
+  Future<String?> _getToken() async => _secureStorage.read(key: _tokenKey);
+
   @override
   Future<AuthApiModel?> login(String email, String password) async {
-    final response = await _apiClient.post(
-      ApiEndpoints.Login,
-      data: {"email": email, "password": password},
-    );
-
-    if (response.data["success"] == true) {
-      final data = response.data["data"];
-      final token = response.data["token"];
-
-      final user = AuthApiModel.fromJson(data);
-
-      await _userSessionService.saveUserSession(
-        userId: user.authId!,
-        email: user.email,
-        name: user.name,
-        contact: user.contact,
-        address: user.address,
+    try {
+      final response = await _apiClient.post(
+        ApiEndpoints.Login,
+        data: {"email": email.toLowerCase().trim(), "password": password},
       );
 
-      await _secureStorage.write(key: "auth_token", value: token);
-      return user;
+      if (response.data["success"] == true) {
+        final token = response.data["token"]?.toString();
+
+        final userJson = response.data["user"] ?? response.data["data"];
+        if (userJson == null) {
+          throw Exception("Login succeeded but user data missing");
+        }
+
+        final user = AuthApiModel.fromJson(Map<String, dynamic>.from(userJson));
+
+        await _userSessionService.saveUserSession(
+          userId: user.authId ?? "",
+          email: user.email,
+          name: user.name,
+          contact: user.contact,
+          address: user.address,
+        );
+
+        if (user.profilePicture != null && user.profilePicture!.isNotEmpty) {
+          await _userSessionService.saveProfilePicture(user.profilePicture!);
+        }
+
+        if (token == null || token.isEmpty) {
+          throw Exception("Token missing in login response");
+        }
+        await _secureStorage.write(key: _tokenKey, value: token);
+
+        return user;
+      }
+
+      throw Exception(
+        response.data["message"] ?? response.data["error"] ?? "Login failed",
+      );
+    } on DioException catch (e) {
+      final errorData = e.response?.data;
+      if (errorData is Map<String, dynamic>) {
+        throw Exception(
+          errorData["message"] ??
+              errorData["error"] ??
+              e.message ??
+              "Login failed",
+        );
+      }
+      throw Exception(e.message ?? "Network error during login");
     }
-    return null;
   }
 
-  // Update this part in your existing auth_remote_datasource.dart
   @override
   Future<AuthApiModel> register(AuthApiModel user) async {
     try {
       final response = await _apiClient.post(
-        ApiEndpoints.Register,
+        ApiEndpoints.Register, // /auth/signup
         data: user.toJson(),
       );
 
       if (response.data["success"] == true) {
-        return AuthApiModel.fromJson(response.data["data"]);
+        final userJson = response.data["data"] ?? response.data["user"];
+        if (userJson == null) {
+          throw Exception("Registration successful but no user returned");
+        }
+
+        final created = AuthApiModel.fromJson(
+          Map<String, dynamic>.from(userJson),
+        );
+
+        await _userSessionService.saveUserSession(
+          userId: created.authId ?? "",
+          email: created.email,
+          name: created.name,
+          contact: created.contact,
+          address: created.address,
+        );
+
+        if (created.profilePicture != null &&
+            created.profilePicture!.isNotEmpty) {
+          await _userSessionService.saveProfilePicture(created.profilePicture!);
+        }
+
+        return created;
       }
 
-      // Get error message from response
-      final errorMessage =
-          response.data["message"] ??
-          response.data["error"] ??
-          "Registration failed";
-
-      throw Exception(errorMessage);
+      throw Exception(
+        response.data["message"] ??
+            response.data["error"] ??
+            "Registration failed",
+      );
     } on DioException catch (e) {
-      // Handle Dio errors
       final errorData = e.response?.data;
       if (errorData is Map<String, dynamic>) {
-        final errorMessage =
-            errorData["message"] ??
-            errorData["error"] ??
-            e.message ??
-            "Registration failed";
-        throw Exception(errorMessage);
+        throw Exception(
+          errorData["message"] ??
+              errorData["error"] ??
+              e.message ??
+              "Registration failed",
+        );
       }
       throw Exception(e.message ?? "Network error during registration");
     }
   }
 
   @override
+  Future<AuthApiModel> getMe() async {
+    final token = await _getToken();
+    if (token == null || token.isEmpty) {
+      throw Exception("Token missing. Please login again.");
+    }
+
+    try {
+      final response = await _apiClient.get(ApiEndpoints.Me);
+
+      if (response.data["success"] == true) {
+        final userJson = response.data["data"] ?? response.data["user"];
+        if (userJson == null) throw Exception("No user returned");
+
+        final me = AuthApiModel.fromJson(Map<String, dynamic>.from(userJson));
+
+        await _userSessionService.saveUserSession(
+          userId: me.authId ?? "",
+          email: me.email,
+          name: me.name,
+          contact: me.contact,
+          address: me.address,
+        );
+
+        if (me.profilePicture != null && me.profilePicture!.isNotEmpty) {
+          await _userSessionService.saveProfilePicture(me.profilePicture!);
+        }
+
+        return me;
+      }
+
+      throw Exception(response.data["message"] ?? "Failed to fetch profile");
+    } on DioException catch (e) {
+      final errorData = e.response?.data;
+      if (errorData is Map<String, dynamic>) {
+        throw Exception(
+          errorData["message"] ?? e.message ?? "Failed to fetch profile",
+        );
+      }
+      throw Exception(e.message ?? "Network error during profile fetch");
+    }
+  }
+
+  @override
+  Future<String> uploadProfilePicture(File file) async {
+    final token = await _getToken();
+    if (token == null || token.isEmpty) {
+      throw Exception("Token missing. Please login again.");
+    }
+
+    try {
+      final formData = FormData.fromMap({
+        // ✅ MUST match multer: uploadProfilePicture.single("profilePicture")
+        "profilePicture": await MultipartFile.fromFile(
+          file.path,
+          filename: file.path.split('/').last,
+        ),
+      });
+
+      final response = await _apiClient.post(
+        ApiEndpoints.UploadProfilePicture,
+        data: formData,
+        option: Options(contentType: "multipart/form-data"),
+      );
+
+      if (response.data["success"] == true) {
+        final data = response.data["data"];
+        final filename = data?["filename"]?.toString();
+
+        if (filename == null || filename.isEmpty) {
+          throw Exception("Upload succeeded but filename missing");
+        }
+
+        await _userSessionService.saveProfilePicture(filename);
+
+        final userJson = data?["user"];
+        if (userJson != null) {
+          final updated = AuthApiModel.fromJson(
+            Map<String, dynamic>.from(userJson),
+          );
+
+          await _userSessionService.saveUserSession(
+            userId: updated.authId ?? "",
+            email: updated.email,
+            name: updated.name,
+            contact: updated.contact,
+            address: updated.address,
+          );
+
+          if (updated.profilePicture != null &&
+              updated.profilePicture!.isNotEmpty) {
+            await _userSessionService.saveProfilePicture(
+              updated.profilePicture!,
+            );
+          }
+        }
+
+        return filename;
+      }
+
+      throw Exception(response.data["message"] ?? "Upload failed");
+    } on DioException catch (e) {
+      final errorData = e.response?.data;
+      if (errorData is Map<String, dynamic>) {
+        throw Exception(errorData["message"] ?? e.message ?? "Upload failed");
+      }
+      throw Exception(e.message ?? "Network error during upload");
+    }
+  }
+
+  @override
   Future<void> logout() async {
-    await _secureStorage.delete(key: "auth_token");
+    await _secureStorage.delete(key: _tokenKey);
     await _userSessionService.clearSession();
   }
 }

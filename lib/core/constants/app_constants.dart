@@ -10,6 +10,7 @@ class AppConstants {
   // Assets
   static const String logoPath = 'assets/images/logo.png';
   static const String carImage = 'assets/images/car.png';
+  static const String wheelSpinPath = 'assets/images/spin2.png';
 
   // Onboarding Images
   static const String onboarding1 = 'assets/images/page1.png';

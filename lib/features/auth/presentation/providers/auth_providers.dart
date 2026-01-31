@@ -7,7 +7,6 @@ import 'package:wheels_flutter/features/auth/domain/usecases/signup_usecases.dar
 import 'package:wheels_flutter/features/auth/presentation/state/auth_state.dart';
 import 'package:wheels_flutter/features/auth/presentation/view_model/auth_view_model.dart';
 
-// ========== AUTH USE CASES ==========
 final loginUsecaseProvider = Provider<LoginUsecase>((ref) {
   final authRepository = ref.read(authRepositoryProvider);
   return LoginUsecase(authRepository: authRepository);
@@ -18,7 +17,6 @@ final registerUsecaseProvider = Provider<RegisterUsecase>((ref) {
   return RegisterUsecase(authRepository: authRepository);
 });
 
-// ========== AUTH VIEW MODEL ==========
 final authViewModelProvider = StateNotifierProvider<AuthViewModel, AuthState>(
   (ref) => AuthViewModel(
     loginUsecase: ref.read(loginUsecaseProvider),
@@ -26,7 +24,6 @@ final authViewModelProvider = StateNotifierProvider<AuthViewModel, AuthState>(
   ),
 );
 
-// ========== DERIVED PROVIDERS ==========
 final authStatusProvider = Provider<AuthStatus>((ref) {
   return ref.watch(authViewModelProvider).status;
 });
@@ -43,7 +40,6 @@ final authLoadingProvider = Provider<bool>((ref) {
   return ref.watch(authViewModelProvider).status == AuthStatus.loading;
 });
 
-// ========== CURRENT USER DETAILS ==========
 final currentUserNameProvider = Provider<String?>((ref) {
   final user = ref.watch(currentUserProvider);
   return user?.name;

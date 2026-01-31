@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:pretty_dio_logger/pretty_dio_logger.dart';
+
 import 'api_endpoints.dart';
 
 final apiClientProvider = Provider<ApiClient>((ref) => ApiClient());
@@ -18,7 +19,7 @@ class ApiClient {
         connectTimeout: ApiEndpoints.connectionTimeout,
         receiveTimeout: ApiEndpoints.receiveTimeout,
         headers: {
-          'Content-Type': 'application/json',
+          // ✅ Don't force Content-Type globally (multipart needs boundary)
           'Accept': 'application/json',
         },
       ),
@@ -26,7 +27,6 @@ class ApiClient {
 
     _dio.interceptors.add(_AuthInterceptor());
 
-    // Retry interceptor
     _dio.interceptors.add(
       RetryInterceptor(
         dio: _dio,
@@ -45,7 +45,6 @@ class ApiClient {
       ),
     );
 
-    // Pretty logger in debug mode
     if (kDebugMode) {
       _dio.interceptors.add(
         PrettyDioLogger(
@@ -66,7 +65,7 @@ class ApiClient {
     String path, {
     Map<String, dynamic>? queryParameters,
     Options? option,
-  }) async {
+  }) {
     return _dio.get(path, queryParameters: queryParameters, options: option);
   }
 
@@ -75,8 +74,22 @@ class ApiClient {
     dynamic data,
     Map<String, dynamic>? queryParameters,
     Options? option,
-  }) async {
+  }) {
     return _dio.post(
+      path,
+      data: data,
+      queryParameters: queryParameters,
+      options: option,
+    );
+  }
+
+  Future<Response> put(
+    String path, {
+    dynamic data,
+    Map<String, dynamic>? queryParameters,
+    Options? option,
+  }) {
+    return _dio.put(
       path,
       data: data,
       queryParameters: queryParameters,
@@ -85,21 +98,20 @@ class ApiClient {
   }
 }
 
-// Auth interceptor
 class _AuthInterceptor extends Interceptor {
-  final _storage = const FlutterSecureStorage();
   static const String _tokenKey = "auth_token";
+  final FlutterSecureStorage _storage = const FlutterSecureStorage();
 
   @override
   void onRequest(
     RequestOptions options,
     RequestInterceptorHandler handler,
   ) async {
-    // Public endpoints (skip auth)
-    final publicEndpoints = [
+    // ✅ Public endpoints: token not required
+    final publicEndpoints = <String>[
       ApiEndpoints.Login,
       ApiEndpoints.Register,
-      ApiEndpoints.batches,
+      ApiEndpoints.batches, // keep if your batches endpoint is public
     ];
 
     final isPublic = publicEndpoints.any(
@@ -108,7 +120,9 @@ class _AuthInterceptor extends Interceptor {
 
     if (!isPublic) {
       final token = await _storage.read(key: _tokenKey);
-      if (token != null) options.headers["Authorization"] = "Bearer $token";
+      if (token != null && token.isNotEmpty) {
+        options.headers["Authorization"] = "Bearer $token";
+      }
     }
 
     handler.next(options);
@@ -116,8 +130,10 @@ class _AuthInterceptor extends Interceptor {
 
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) {
-    // If unauthorized, delete token
-    if (err.response?.statusCode == 401) _storage.delete(key: _tokenKey);
+    // ✅ If unauthorized, clear token (session should also be cleared in logout)
+    if (err.response?.statusCode == 401) {
+      _storage.delete(key: _tokenKey);
+    }
     handler.next(err);
   }
 }

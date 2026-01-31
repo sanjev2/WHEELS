@@ -17,9 +17,6 @@ import 'package:wheels_flutter/features/auth/data/models/auth_hive_model.dart';
 import 'package:wheels_flutter/features/auth/domain/entities/auth_entity.dart';
 import 'package:wheels_flutter/features/auth/domain/repositories/auth_repositories.dart';
 
-/// ---------------------------------------------------------------------------
-/// Provider
-/// ---------------------------------------------------------------------------
 final authRepositoryProvider = Provider<IAuthRepository>((ref) {
   return AuthRepositoryImpl(
     localDatasource: ref.read(authLocalDatasourceProvider),
@@ -28,9 +25,6 @@ final authRepositoryProvider = Provider<IAuthRepository>((ref) {
   );
 });
 
-/// ---------------------------------------------------------------------------
-/// Repository Implementation
-/// ---------------------------------------------------------------------------
 class AuthRepositoryImpl implements IAuthRepository {
   final IAuthDatasource _localDatasource;
   final IAuthRemoteDatasource _remoteDatasource;
@@ -108,9 +102,6 @@ class AuthRepositoryImpl implements IAuthRepository {
     }
   }
 
-  /// -------------------------------------------------------------------------
-  /// LOGOUT
-  /// -------------------------------------------------------------------------
   @override
   Future<Either<Failure, bool>> logout() async {
     try {
@@ -122,9 +113,6 @@ class AuthRepositoryImpl implements IAuthRepository {
     }
   }
 
-  /// -------------------------------------------------------------------------
-  /// CURRENT USER
-  /// -------------------------------------------------------------------------
   @override
   Future<Either<Failure, AuthEntity>> getCurrentUser() async {
     try {
@@ -138,9 +126,6 @@ class AuthRepositoryImpl implements IAuthRepository {
     }
   }
 
-  /// -------------------------------------------------------------------------
-  /// ERROR PARSER
-  /// -------------------------------------------------------------------------
   String _extractDioError(DioException e) {
     if (e.response?.data == null) {
       return "Network error. Please try again.";
