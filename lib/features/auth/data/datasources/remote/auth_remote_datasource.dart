@@ -53,7 +53,6 @@ class AuthRemoteDatasource implements IAuthRemoteDatasource {
       if (response.data["success"] == true) {
         final token = response.data["token"]?.toString();
 
-        // ✅ your backend may return: { user: {...}, token } OR { data: {...}, token }
         final userJson = response.data["user"] ?? response.data["data"];
         if (userJson == null) {
           throw Exception("Login succeeded but user data missing");
