@@ -299,24 +299,20 @@ class _ProfilePageProState extends ConsumerState<ProfilePagePro> {
 
       final file = File(picked.path);
 
-      // ✅ local preview instantly
       setState(() {
         _localAvatarFile = file;
         _isUploading = true;
       });
-
-      // ✅ upload to backend
       final filename = await ref
           .read(authRemoteDatasourceProvider)
           .uploadProfilePicture(file);
 
-      // ✅ save filename to session
       await ref.read(userSessionServiceProvider).saveProfilePicture(filename);
 
       if (!mounted) return;
       setState(() {
         _profilePictureFilename = filename;
-        _localAvatarFile = null; // ✅ after upload, always load server image
+        _localAvatarFile = null;
         _isUploading = false;
       });
 
