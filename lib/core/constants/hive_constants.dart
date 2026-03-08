@@ -15,4 +15,11 @@ class HiveTableConstant {
   // Category Feature (if needed)
   static const int categoryTypeId = 3;
   static const String categoryTable = 'category_table';
+
+  // Car Feature (Vehicles)
+  static const int carTypeId = 4;
+  static const String carTable = 'car_table';
+
+  static const int tripTypeId = 20; // pick an unused number
+  static const String tripTable = 'trip_table';
 }

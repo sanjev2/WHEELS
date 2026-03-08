@@ -1,5 +1,5 @@
 import 'package:equatable/equatable.dart';
-import 'package:wheels_flutter/features/auth/domain/entities/auth_entity.dart';
+import '../../domain/entities/auth_entity.dart';
 
 enum AuthStatus {
   initial,
@@ -9,6 +9,8 @@ enum AuthStatus {
   registered,
   error,
 }
+
+const _unset = Object();
 
 class AuthState extends Equatable {
   final AuthStatus status;
@@ -23,13 +25,15 @@ class AuthState extends Equatable {
 
   AuthState copyWith({
     AuthStatus? status,
-    AuthEntity? authEntity,
+    Object? authEntity = _unset,
     String? errorMessage,
   }) {
     return AuthState(
       status: status ?? this.status,
-      authEntity: authEntity ?? this.authEntity,
-      errorMessage: errorMessage ?? this.errorMessage,
+      authEntity: authEntity == _unset
+          ? this.authEntity
+          : authEntity as AuthEntity?,
+      errorMessage: errorMessage,
     );
   }
 

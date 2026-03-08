@@ -7,25 +7,16 @@ import 'package:wheels_flutter/features/batch/domain/repositories/batch_reposito
 import 'package:wheels_flutter/features/batch/presentation/view_model/batch_view_model.dart';
 import 'package:wheels_flutter/features/batch/presentation/state/batch_state.dart';
 
-/// ------------------
-/// DataSource Provider
-/// ------------------
 final batchDataSourceProvider = Provider<IBatchDatasource>((ref) {
   final hiveService = ref.read(hiveServiceProvider);
   return BatchLocalDatasource(hiveService: hiveService);
 });
 
-/// ------------------
-/// Repository Provider
-/// ------------------
 final batchRepositoryProvider = Provider<IBatchRepository>((ref) {
   final dataSource = ref.read(batchDataSourceProvider);
   return BatchRepositoryImpl(dataSource: dataSource);
 });
 
-/// ------------------
-/// ViewModel Provider (Notifier ONLY)
-/// ------------------
 final batchViewModelProvider = NotifierProvider<BatchViewModel, BatchState>(
   () => BatchViewModel(),
 );

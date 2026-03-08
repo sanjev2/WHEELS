@@ -7,4 +7,11 @@ abstract interface class IAuthDatasource {
   Future<void> logout();
   Future<AuthHiveModel?> getCurrentUser();
   Future<bool> isUserLoggedIn();
+
+  Future<int> forgotPassword({required String email});
+  Future<String> verifyResetCode({required String email, required String code});
+  Future<void> resetPassword({
+    required String resetToken,
+    required String newPassword,
+  });
 }

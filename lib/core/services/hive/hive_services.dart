@@ -1,42 +1,52 @@
 import 'package:hive_flutter/hive_flutter.dart';
-import '../../../features/auth/data/models/auth_hive_model.dart';
-import '../../../features/batch/data/models/batch_hive_model.dart';
+import 'package:wheels_flutter/features/trip/data/trip_hive_model.dart';
+
 import '../../../core/constants/hive_constants.dart';
 
+import '../../../features/auth/data/models/auth_hive_model.dart';
+import '../../../features/batch/data/models/batch_hive_model.dart';
+import '../../../features/car/data/models/car_hive_model.dart';
+
 class HiveService {
-  bool _isInitialized = false; // internal flag
+  bool _isInitialized = false;
 
   late Box<AuthHiveModel> _userBox;
   late Box<BatchHiveModel> _batchBox;
+  late Box<CarHiveModel> _carBox;
+  late Box<TripHiveModel> _tripBox;
 
-  /// Initialize Hive and open boxes
   Future<void> init() async {
     if (_isInitialized) return;
 
-    // Initialize Hive for Flutter
     await Hive.initFlutter();
 
-    // Register adapters
-    if (!Hive.isAdapterRegistered(0)) {
+    if (!Hive.isAdapterRegistered(HiveTableConstant.userTypeId)) {
       Hive.registerAdapter(AuthHiveModelAdapter());
     }
-    if (!Hive.isAdapterRegistered(1)) {
+    if (!Hive.isAdapterRegistered(HiveTableConstant.batchTypeId)) {
       Hive.registerAdapter(BatchHiveModelAdapter());
     }
+    if (!Hive.isAdapterRegistered(HiveTableConstant.carTypeId)) {
+      Hive.registerAdapter(CarHiveModelAdapter());
+    }
+    if (!Hive.isAdapterRegistered(HiveTableConstant.tripTypeId)) {
+      Hive.registerAdapter(TripHiveModelAdapter());
+    }
 
-    // Open boxes
     _userBox = await Hive.openBox<AuthHiveModel>(HiveTableConstant.userTable);
     _batchBox = await Hive.openBox<BatchHiveModel>(
       HiveTableConstant.batchTable,
     );
+    _carBox = await Hive.openBox<CarHiveModel>(HiveTableConstant.carTable);
+    _tripBox = await Hive.openBox<TripHiveModel>(HiveTableConstant.tripTable);
 
     _isInitialized = true;
-    print('✅ HiveService initialized successfully');
+    // ignore: avoid_print
+    print("✅ HiveService initialized");
   }
 
-  // Getter for Auth/User Box
   Box<AuthHiveModel> get userBox => _userBox;
-
-  // Getter for Batch Box
   Box<BatchHiveModel> get batchBox => _batchBox;
+  Box<CarHiveModel> get carBox => _carBox;
+  Box<TripHiveModel> get tripBox => _tripBox;
 }

@@ -1,4 +1,3 @@
-// core/services/connectivity/network_info.dart
 import 'dart:async';
 import 'dart:io';
 
@@ -28,7 +27,6 @@ class NetworkInfo implements INetworkInfo {
         return false;
       }
 
-      // Check actual internet connectivity
       if (result == ConnectivityResult.mobile ||
           result == ConnectivityResult.wifi) {
         return await _checkIfInternetIsAvailable();

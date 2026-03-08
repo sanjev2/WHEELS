@@ -12,8 +12,7 @@ class AuthEntity extends Equatable {
   final bool isLoggedIn;
   final String role;
 
-  // ✅ ADD ONLY THIS
-  final String? profilePicture; // filename from backend: profile_picture
+  final String? profilePicture;
 
   const AuthEntity({
     this.userId,
@@ -65,6 +64,6 @@ class AuthEntity extends Equatable {
     address,
     isLoggedIn,
     role,
-    profilePicture, // ✅ ADD
+    profilePicture,
   ];
 }

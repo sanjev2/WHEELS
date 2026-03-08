@@ -4,13 +4,39 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
+import 'package:wheels_flutter/features/car/presentation/pages/my_cars_page.dart';
 import 'package:wheels_flutter/core/api/api_endpoints.dart';
 import 'package:wheels_flutter/core/services/storage/user_session.dart';
 import 'package:wheels_flutter/features/auth/data/datasources/remote/auth_remote_datasource.dart';
 import 'package:wheels_flutter/features/auth/presentation/pages/login_pages.dart';
+import 'package:wheels_flutter/features/profile/presentation/edit_profile_page.dart';
+import 'package:wheels_flutter/features/profile/presentation/setting_page.dart';
 
-/// Accent color: #5A9C41
-const kAccentGreen = Color(0xFF5A9C41);
+import 'package:wheels_flutter/features/auth/presentation/providers/auth_providers.dart';
+
+class AppColors {
+  static const bg = Color(0xFFF5F7F7);
+  static const surface = Colors.white;
+
+  static const primaryGreen = Color(0xFF16A34A);
+  static const secondaryGreen = Color(0xFF10B981);
+
+  static const textPrimary = Color(0xFF0B1220);
+  static const textTertiary = Colors.black54;
+  static const textSubtle = Colors.black38;
+
+  static Color borderLight = Colors.black.withOpacity(0.06);
+  static Color borderSofter = Colors.black.withOpacity(0.08);
+  static Color shadowSoft = Colors.black.withOpacity(0.06);
+
+  static const surfaceGreen = Color(0xFFEFFAF3);
+
+  static const LinearGradient accentGrad = LinearGradient(
+    colors: [primaryGreen, secondaryGreen],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+}
 
 class ProfilePagePro extends ConsumerStatefulWidget {
   const ProfilePagePro({super.key});
@@ -39,6 +65,10 @@ class _ProfilePageProState extends ConsumerState<ProfilePagePro> {
   }
 
   Future<void> _loadSession() async {
+    try {
+      await ref.read(authRemoteDatasourceProvider).getMe();
+    } catch (_) {}
+
     final session = ref.read(userSessionServiceProvider);
     final data = session.getUserData();
 
@@ -52,21 +82,12 @@ class _ProfilePageProState extends ConsumerState<ProfilePagePro> {
     });
   }
 
-  /// ✅ FIXED: correct static folder + cache buster
   String? get _avatarUrl {
     final filename = _profilePictureFilename;
     if (filename == null || filename.trim().isEmpty) return null;
 
-    // ApiEndpoints.baseUrl = http://10.0.2.2:5000/api
     final host = ApiEndpoints.baseUrl.replaceFirst("/api", "");
-
-    // ✅ MUST MATCH backend:
-    // app.use("/public", express.static(...))
-    // multer saves into: public/profile_photo
-    //
-    // ✅ Cache-buster so newly uploaded image shows immediately (no stale cache)
     final bust = DateTime.now().millisecondsSinceEpoch;
-
     return "$host/public/profile_photo/$filename?t=$bust";
   }
 
@@ -77,22 +98,23 @@ class _ProfilePageProState extends ConsumerState<ProfilePagePro> {
     return Theme(
       data: theme.copyWith(
         colorScheme: theme.colorScheme.copyWith(
-          primary: kAccentGreen,
-          secondary: kAccentGreen,
+          primary: AppColors.primaryGreen,
+          secondary: AppColors.secondaryGreen,
         ),
       ),
       child: Scaffold(
-        backgroundColor: const Color(0xFFF5F7F7),
+        backgroundColor: AppColors.bg,
         appBar: AppBar(
+          backgroundColor: AppColors.surface,
+          surfaceTintColor: AppColors.surface,
           elevation: 0,
-          backgroundColor: Colors.white,
-          surfaceTintColor: Colors.white,
           centerTitle: true,
           title: const Text(
             "Profile",
             style: TextStyle(
-              color: Color(0xFF111827),
-              fontWeight: FontWeight.w800,
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.w900,
+              fontSize: 18,
             ),
           ),
         ),
@@ -100,7 +122,8 @@ class _ProfilePageProState extends ConsumerState<ProfilePagePro> {
           slivers: [
             SliverToBoxAdapter(
               child: _ProfileHeader(
-                accent: kAccentGreen,
+                accent: AppColors.primaryGreen,
+                accent2: AppColors.secondaryGreen,
                 name: _fullName.isNotEmpty ? _fullName : "—",
                 subtitle: "Member since $_memberSince",
                 avatar: _buildAvatarProvider(),
@@ -141,7 +164,7 @@ class _ProfilePageProState extends ConsumerState<ProfilePagePro> {
                 child: Column(
                   children: [
                     _ActionTile(
-                      accent: kAccentGreen,
+                      accent: AppColors.primaryGreen,
                       icon: Icons.directions_car_outlined,
                       title: "Add / Edit Vehicle",
                       subtitle: "Manage your vehicles and details",
@@ -149,7 +172,7 @@ class _ProfilePageProState extends ConsumerState<ProfilePagePro> {
                     ),
                     const _DividerSoft(),
                     _ActionTile(
-                      accent: kAccentGreen,
+                      accent: AppColors.primaryGreen,
                       icon: Icons.edit_outlined,
                       title: "Edit Profile",
                       subtitle: "Update your personal information",
@@ -157,7 +180,7 @@ class _ProfilePageProState extends ConsumerState<ProfilePagePro> {
                     ),
                     const _DividerSoft(),
                     _ActionTile(
-                      accent: kAccentGreen,
+                      accent: AppColors.primaryGreen,
                       icon: Icons.settings_outlined,
                       title: "Settings",
                       subtitle: "Privacy, notifications, preferences",
@@ -182,13 +205,10 @@ class _ProfilePageProState extends ConsumerState<ProfilePagePro> {
   }
 
   ImageProvider _buildAvatarProvider() {
-    // ✅ show local preview while uploading
     if (_localAvatarFile != null) return FileImage(_localAvatarFile!);
 
     final url = _avatarUrl;
-    if (url != null && url.trim().isNotEmpty) {
-      return NetworkImage(url);
-    }
+    if (url != null && url.trim().isNotEmpty) return NetworkImage(url);
 
     return const AssetImage("assets/images/avatar_placeholder.png");
   }
@@ -196,7 +216,7 @@ class _ProfilePageProState extends ConsumerState<ProfilePagePro> {
   void _onAvatarTap() {
     showModalBottomSheet<void>(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -211,7 +231,7 @@ class _ProfilePageProState extends ConsumerState<ProfilePagePro> {
                   width: 44,
                   height: 5,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFE5E7EB),
+                    color: AppColors.borderSofter,
                     borderRadius: BorderRadius.circular(99),
                   ),
                 ),
@@ -220,8 +240,8 @@ class _ProfilePageProState extends ConsumerState<ProfilePagePro> {
                   "Profile picture",
                   style: TextStyle(
                     fontSize: 16,
-                    fontWeight: FontWeight.w800,
-                    color: Color(0xFF111827),
+                    fontWeight: FontWeight.w900,
+                    color: AppColors.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 14),
@@ -303,6 +323,7 @@ class _ProfilePageProState extends ConsumerState<ProfilePagePro> {
         _localAvatarFile = file;
         _isUploading = true;
       });
+
       final filename = await ref
           .read(authRemoteDatasourceProvider)
           .uploadProfilePicture(file);
@@ -322,47 +343,46 @@ class _ProfilePageProState extends ConsumerState<ProfilePagePro> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _isUploading = false);
-
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text(e.toString())));
     }
   }
 
-  void _onEditProfileTap() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Navigate to Edit Profile screen")),
+  Future<void> _onEditProfileTap() async {
+    final updated = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(builder: (_) => const EditProfilePage()),
     );
+
+    if (updated == true) {
+      await _loadSession();
+    }
   }
 
   void _onAddEditVehicleTap() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Navigate to Add/Edit Vehicle screen")),
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const MyCarsPage()),
     );
   }
 
   void _onSettingsTap() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Navigate to Settings screen")),
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const SettingsPagePro()),
     );
   }
 
   Future<void> _onLogoutTap() async {
-    await ref.read(authRemoteDatasourceProvider).logout();
-
-    if (!mounted) return;
-    Navigator.pushAndRemoveUntil(
-      context,
-      MaterialPageRoute(builder: (_) => const LoginPage()),
-      (route) => false,
-    );
+    await ref.read(authViewModelProvider.notifier).logout();
   }
 }
 
-// UI widgets unchanged below (same as your existing)
 class _ProfileHeader extends StatelessWidget {
   const _ProfileHeader({
     required this.accent,
+    required this.accent2,
     required this.name,
     required this.subtitle,
     required this.avatar,
@@ -371,6 +391,7 @@ class _ProfileHeader extends StatelessWidget {
   });
 
   final Color accent;
+  final Color accent2;
   final String name;
   final String subtitle;
   final ImageProvider avatar;
@@ -380,7 +401,7 @@ class _ProfileHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: Colors.white,
+      color: AppColors.surface,
       child: Stack(
         children: [
           Container(
@@ -389,7 +410,7 @@ class _ProfileHeader extends StatelessWidget {
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [accent.withOpacity(0.18), accent.withOpacity(0.06)],
+                colors: [accent.withOpacity(0.18), accent2.withOpacity(0.06)],
               ),
             ),
           ),
@@ -410,7 +431,7 @@ class _ProfileHeader extends StatelessWidget {
                   style: const TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w900,
-                    color: Color(0xFF111827),
+                    color: AppColors.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -419,8 +440,8 @@ class _ProfileHeader extends StatelessWidget {
                   textAlign: TextAlign.center,
                   style: const TextStyle(
                     fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF6B7280),
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textTertiary,
                   ),
                 ),
                 const SizedBox(height: 14),
@@ -440,7 +461,7 @@ class _ProfileHeader extends StatelessWidget {
                     icon: const Icon(Icons.edit_outlined),
                     label: const Text(
                       "Edit Profile",
-                      style: TextStyle(fontWeight: FontWeight.w800),
+                      style: TextStyle(fontWeight: FontWeight.w900),
                     ),
                   ),
                 ),
@@ -479,10 +500,10 @@ class _AvatarFacebookStyle extends StatelessWidget {
               height: 118,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.white,
+                color: AppColors.surface,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.08),
+                    color: AppColors.shadowSoft,
                     blurRadius: 18,
                     offset: const Offset(0, 10),
                   ),
@@ -506,12 +527,9 @@ class _AvatarFacebookStyle extends StatelessWidget {
                 width: 38,
                 height: 38,
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppColors.surface,
                   shape: BoxShape.circle,
-                  border: Border.all(
-                    color: const Color(0xFFE5E7EB),
-                    width: 1.2,
-                  ),
+                  border: Border.all(color: AppColors.borderSofter, width: 1.2),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withOpacity(0.10),
@@ -546,12 +564,12 @@ class _SectionCard extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.surface,
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: const Color(0xFFE5E7EB)),
+          border: Border.all(color: AppColors.borderLight),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.04),
+              color: AppColors.shadowSoft,
               blurRadius: 18,
               offset: const Offset(0, 10),
             ),
@@ -567,7 +585,7 @@ class _SectionCard extends StatelessWidget {
                 style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w900,
-                  color: Color(0xFF111827),
+                  color: AppColors.textPrimary,
                 ),
               ),
               const SizedBox(height: 10),
@@ -599,7 +617,7 @@ class _InfoRow extends StatelessWidget {
               style: const TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w800,
-                color: Color(0xFF6B7280),
+                color: AppColors.textTertiary,
               ),
             ),
           ),
@@ -609,8 +627,8 @@ class _InfoRow extends StatelessWidget {
               value,
               style: const TextStyle(
                 fontSize: 13,
-                fontWeight: FontWeight.w800,
-                color: Color(0xFF111827),
+                fontWeight: FontWeight.w900,
+                color: AppColors.textPrimary,
               ),
             ),
           ),
@@ -664,7 +682,7 @@ class _ActionTile extends StatelessWidget {
                     style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w900,
-                      color: Color(0xFF111827),
+                      color: AppColors.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 3),
@@ -673,13 +691,16 @@ class _ActionTile extends StatelessWidget {
                     style: const TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
-                      color: Color(0xFF6B7280),
+                      color: AppColors.textTertiary,
                     ),
                   ),
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right_rounded, color: Color(0xFF9CA3AF)),
+            const Icon(
+              Icons.chevron_right_rounded,
+              color: AppColors.textSubtle,
+            ),
           ],
         ),
       ),
@@ -691,7 +712,7 @@ class _DividerSoft extends StatelessWidget {
   const _DividerSoft();
   @override
   Widget build(BuildContext context) {
-    return const Divider(height: 1, thickness: 1, color: Color(0xFFF1F5F9));
+    return Divider(height: 1, thickness: 1, color: AppColors.borderLight);
   }
 }
 
@@ -710,13 +731,13 @@ class _BottomSheetAction extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = danger ? const Color(0xFFDC2626) : const Color(0xFF111827);
+    final color = danger ? const Color(0xFFDC2626) : AppColors.textPrimary;
     return ListTile(
       contentPadding: EdgeInsets.zero,
       leading: Icon(icon, color: color),
       title: Text(
         title,
-        style: TextStyle(fontWeight: FontWeight.w800, color: color),
+        style: TextStyle(fontWeight: FontWeight.w900, color: color),
       ),
       onTap: onTap,
     );
@@ -732,9 +753,9 @@ class _DangerZone extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
+        border: Border.all(color: AppColors.borderLight),
       ),
       padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
       child: Column(
@@ -745,7 +766,7 @@ class _DangerZone extends StatelessWidget {
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w900,
-              color: Color(0xFF111827),
+              color: AppColors.textPrimary,
             ),
           ),
           const SizedBox(height: 10),
@@ -754,7 +775,9 @@ class _DangerZone extends StatelessWidget {
             child: OutlinedButton.icon(
               style: OutlinedButton.styleFrom(
                 foregroundColor: const Color(0xFFDC2626),
-                side: const BorderSide(color: Color(0xFFFCA5A5)),
+                side: BorderSide(
+                  color: const Color(0xFFDC2626).withOpacity(0.25),
+                ),
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14),
