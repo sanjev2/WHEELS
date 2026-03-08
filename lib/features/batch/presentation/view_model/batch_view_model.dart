@@ -13,7 +13,6 @@ class BatchViewModel extends Notifier<BatchState> {
 
   @override
   BatchState build() {
-    // Get the repository from the provider
     _batchRepository = ref.read(batchRepositoryProvider);
     return BatchState();
   }
@@ -56,7 +55,7 @@ class BatchViewModel extends Notifier<BatchState> {
       (success) {
         if (success) {
           state = state.copyWith(status: BatchStatus.created);
-          getAllBatches(); // Refresh the list
+          getAllBatches();
         }
       },
     );
@@ -77,7 +76,7 @@ class BatchViewModel extends Notifier<BatchState> {
       (success) {
         if (success) {
           state = state.copyWith(status: BatchStatus.deleted);
-          getAllBatches(); // Refresh the list
+          getAllBatches();
         }
       },
     );

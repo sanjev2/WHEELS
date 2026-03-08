@@ -1,5 +1,3 @@
-// features/auth/data/repositories/auth_repository.dart
-
 import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -38,9 +36,6 @@ class AuthRepositoryImpl implements IAuthRepository {
        _remoteDatasource = remoteDatasource,
        _networkInfo = networkInfo;
 
-  /// -------------------------------------------------------------------------
-  /// LOGIN
-  /// -------------------------------------------------------------------------
   @override
   Future<Either<Failure, AuthEntity>> login(
     String email,
@@ -49,16 +44,12 @@ class AuthRepositoryImpl implements IAuthRepository {
     try {
       if (await _networkInfo.isConnected) {
         final apiUser = await _remoteDatasource.login(email, password);
-        if (apiUser != null) {
-          return Right(apiUser.toEntity());
-        }
+        if (apiUser != null) return Right(apiUser.toEntity());
         return Left(AuthFailure(message: "Invalid email or password"));
       }
 
       final localUser = await _localDatasource.login(email, password);
-      if (localUser != null) {
-        return Right(localUser.toEntity());
-      }
+      if (localUser != null) return Right(localUser.toEntity());
 
       return Left(AuthFailure(message: "Invalid email or password"));
     } on DioException catch (e) {
@@ -68,30 +59,20 @@ class AuthRepositoryImpl implements IAuthRepository {
     }
   }
 
-  /// -------------------------------------------------------------------------
-  /// REGISTER
-  /// -------------------------------------------------------------------------
   @override
   Future<Either<Failure, bool>> register(AuthEntity entity) async {
     try {
       if (await _networkInfo.isConnected) {
-        // Map entity → API model
         final apiModel = AuthApiModel.fromEntity(entity);
+        final created = await _remoteDatasource.register(apiModel);
 
-        // Send to backend
-        final response = await _remoteDatasource.register(apiModel);
-
-        // Check backend response
-        if (response.authId != null) {
-          // Optional: save user session here if needed
-          // await _localDatasource.saveUserSession(response.toEntity());
+        if (created.authId != null && created.authId!.isNotEmpty) {
           return const Right(true);
-        } else {
-          return Left(AuthFailure(message: "Registration failed on backend"));
         }
+        return Left(AuthFailure(message: "Registration failed on backend"));
       }
 
-      // If offline, save locally
+      // offline: hive
       final hiveModel = AuthHiveModel.fromEntity(entity);
       await _localDatasource.signup(hiveModel);
       return const Right(true);
@@ -103,13 +84,12 @@ class AuthRepositoryImpl implements IAuthRepository {
   }
 
   @override
-  Future<Either<Failure, bool>> logout() async {
+  Future<Either<Failure, bool>> isUserLoggedIn() async {
     try {
-      await _localDatasource.logout();
-      await _remoteDatasource.logout();
-      return const Right(true);
+      final ok = await _localDatasource.isUserLoggedIn();
+      return Right(ok);
     } catch (e) {
-      return Left(AuthFailure(message: "Logout failed"));
+      return Left(AuthFailure(message: e.toString()));
     }
   }
 
@@ -117,31 +97,31 @@ class AuthRepositoryImpl implements IAuthRepository {
   Future<Either<Failure, AuthEntity>> getCurrentUser() async {
     try {
       final user = await _localDatasource.getCurrentUser();
-      if (user != null) {
-        return Right(user.toEntity());
-      }
+      if (user != null) return Right(user.toEntity());
       return Left(AuthFailure(message: "No user found"));
     } catch (e) {
       return Left(AuthFailure(message: e.toString()));
     }
   }
 
+  @override
+  Future<Either<Failure, void>> logout() async {
+    try {
+      await _localDatasource.logout();
+      await _remoteDatasource.logout();
+      return const Right(null);
+    } catch (e) {
+      return Left(AuthFailure(message: "Logout failed: $e"));
+    }
+  }
+
   String _extractDioError(DioException e) {
-    if (e.response?.data == null) {
-      return "Network error. Please try again.";
-    }
-
+    if (e.response?.data == null) return "Network error. Please try again.";
     final data = e.response!.data;
-
     if (data is Map<String, dynamic>) {
-      if (data.containsKey('message')) {
-        return data['message'].toString();
-      }
-      if (data.containsKey('error')) {
-        return data['error'].toString();
-      }
+      if (data.containsKey('message')) return data['message'].toString();
+      if (data.containsKey('error')) return data['error'].toString();
     }
-
     return e.message ?? "Something went wrong";
   }
 }

@@ -13,7 +13,7 @@ class RegisterParams extends Equatable {
   final String confirmPassword;
   final String contact;
   final String address;
-  final String role; // ← add this
+  final String role;
 
   const RegisterParams({
     required this.name,
@@ -33,7 +33,7 @@ class RegisterParams extends Equatable {
     confirmPassword,
     contact,
     address,
-    role, // ← include role
+    role,
   ];
 }
 
@@ -54,7 +54,7 @@ class RegisterUsecase implements UsecaseWithParams<bool, RegisterParams> {
       contact: params.contact,
       address: params.address,
       isLoggedIn: false,
-      role: params.role, // ← now dynamic
+      role: params.role,
     );
 
     return _authRepository.register(entity);

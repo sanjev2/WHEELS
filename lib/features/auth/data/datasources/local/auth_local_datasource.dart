@@ -1,8 +1,9 @@
-// features/auth/data/datasources/local/auth_local_datasource.dart
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
 import 'package:wheels_flutter/core/constants/hive_constants.dart';
+import 'package:wheels_flutter/core/services/storage/active_car_storage.dart';
 import 'package:wheels_flutter/core/services/storage/user_session.dart';
+
 import '../../models/auth_hive_model.dart';
 import '../auth_datasource.dart';
 
@@ -20,52 +21,19 @@ class AuthLocalDatasource implements IAuthDatasource {
   Box<AuthHiveModel> get _userBox =>
       Hive.box<AuthHiveModel>(HiveTableConstant.userTable);
 
-  AuthHiveModel? _getLoggedInUser() {
-    try {
-      return _userBox.values.firstWhere((user) => user.isLoggedIn);
-    } catch (_) {
-      return null;
-    }
-  }
-
-  AuthHiveModel _copyWithLoginState(
-    AuthHiveModel user, {
-    required bool isLoggedIn,
-  }) {
-    return AuthHiveModel(
-      userId: user.userId,
-      name: user.name,
-      email: user.email,
-      contact: user.contact,
-      address: user.address,
-      password: user.password,
-      isLoggedIn: isLoggedIn,
-      createdAt: user.createdAt,
-    );
-  }
-
   @override
   Future<AuthHiveModel?> login(String email, String password) async {
     try {
       final matchedUsers = _userBox.values.where(
         (u) =>
-            u.email.toLowerCase() == email.toLowerCase() &&
-            u.password == password,
+            u.email.toLowerCase() == email.toLowerCase().trim() &&
+            (u.password ?? "") == password,
       );
 
       if (matchedUsers.isEmpty) return null;
 
-      // Logout all users first
-      for (final u in _userBox.values) {
-        await _userBox.put(u.userId, _copyWithLoginState(u, isLoggedIn: false));
-      }
-
       final user = matchedUsers.first;
-      final loggedInUser = _copyWithLoginState(user, isLoggedIn: true);
 
-      await _userBox.put(user.userId, loggedInUser);
-
-      // Save session
       await _userSessionService.saveUserSession(
         userId: user.userId,
         email: user.email,
@@ -74,8 +42,9 @@ class AuthLocalDatasource implements IAuthDatasource {
         address: user.address,
       );
 
-      return loggedInUser;
+      return user;
     } catch (e) {
+      // ignore: avoid_print
       print('Local login error: $e');
       return null;
     }
@@ -85,33 +54,26 @@ class AuthLocalDatasource implements IAuthDatasource {
   Future<AuthHiveModel> signup(AuthHiveModel user) async {
     try {
       final emailExists = _userBox.values.any(
-        (u) => u.email.toLowerCase() == user.email.toLowerCase(),
+        (u) => u.email.toLowerCase() == user.email.toLowerCase().trim(),
       );
 
       if (emailExists) {
         throw Exception('User already exists with this email');
       }
 
-      // Logout all existing users
-      for (final u in _userBox.values) {
-        await _userBox.put(u.userId, _copyWithLoginState(u, isLoggedIn: false));
-      }
+      await _userBox.put(user.userId, user);
 
-      final newUser = _copyWithLoginState(user, isLoggedIn: true);
-
-      await _userBox.put(newUser.userId, newUser);
-
-      // Save session
       await _userSessionService.saveUserSession(
-        userId: newUser.userId,
-        email: newUser.email,
-        name: newUser.name,
-        contact: newUser.contact,
-        address: newUser.address,
+        userId: user.userId,
+        email: user.email,
+        name: user.name,
+        contact: user.contact,
+        address: user.address,
       );
 
-      return newUser;
+      return user;
     } catch (e) {
+      // ignore: avoid_print
       print('Local signup error: $e');
       rethrow;
     }
@@ -120,16 +82,9 @@ class AuthLocalDatasource implements IAuthDatasource {
   @override
   Future<void> logout() async {
     try {
-      final currentUser = _getLoggedInUser();
-      if (currentUser == null) return;
-
-      await _userBox.put(
-        currentUser.userId,
-        _copyWithLoginState(currentUser, isLoggedIn: false),
-      );
-
       await _userSessionService.clearSession();
     } catch (e) {
+      // ignore: avoid_print
       print('Logout error: $e');
     }
   }
@@ -137,8 +92,28 @@ class AuthLocalDatasource implements IAuthDatasource {
   @override
   Future<AuthHiveModel?> getCurrentUser() async {
     try {
-      return _getLoggedInUser();
+      if (!_userSessionService.isLoggedIn()) return null;
+
+      final userId = _userSessionService.getUserId();
+      if (userId == null || userId.isEmpty) return null;
+
+      // Prefer hive record if exists
+      final hiveUser = _userBox.get(userId);
+      if (hiveUser != null) return hiveUser;
+
+      // Build from session if not in hive
+      return AuthHiveModel(
+        userId: userId,
+        name: _userSessionService.getName() ?? "",
+        email: _userSessionService.getEmail() ?? "",
+        contact: _userSessionService.getContact() ?? "",
+        address: _userSessionService.getAddress() ?? "",
+        password: null,
+        isLoggedIn: true,
+        createdAt: DateTime.now(),
+      );
     } catch (e) {
+      // ignore: avoid_print
       print('Get current user error: $e');
       return null;
     }
@@ -151,5 +126,26 @@ class AuthLocalDatasource implements IAuthDatasource {
     } catch (_) {
       return false;
     }
+  }
+
+  @override
+  Future<int> forgotPassword({required String email}) async {
+    throw UnimplementedError("Forgot password is not supported locally");
+  }
+
+  @override
+  Future<String> verifyResetCode({
+    required String email,
+    required String code,
+  }) async {
+    throw UnimplementedError("Verify reset code is not supported locally");
+  }
+
+  @override
+  Future<void> resetPassword({
+    required String resetToken,
+    required String newPassword,
+  }) async {
+    throw UnimplementedError("Reset password is not supported locally");
   }
 }

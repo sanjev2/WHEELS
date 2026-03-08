@@ -18,14 +18,11 @@ class ApiClient {
         baseUrl: ApiEndpoints.baseUrl,
         connectTimeout: ApiEndpoints.connectionTimeout,
         receiveTimeout: ApiEndpoints.receiveTimeout,
-        headers: {
-          // ✅ Don't force Content-Type globally (multipart needs boundary)
-          'Accept': 'application/json',
-        },
+        headers: const {'Accept': 'application/json'},
       ),
     );
 
-    _dio.interceptors.add(_AuthInterceptor());
+    _dio.interceptors.add(AuthInterceptor());
 
     _dio.interceptors.add(
       RetryInterceptor(
@@ -61,21 +58,21 @@ class ApiClient {
 
   Dio get dio => _dio;
 
-  Future<Response> get(
+  Future<Response<T>> get<T>(
     String path, {
     Map<String, dynamic>? queryParameters,
     Options? option,
   }) {
-    return _dio.get(path, queryParameters: queryParameters, options: option);
+    return _dio.get<T>(path, queryParameters: queryParameters, options: option);
   }
 
-  Future<Response> post(
+  Future<Response<T>> post<T>(
     String path, {
     dynamic data,
     Map<String, dynamic>? queryParameters,
     Options? option,
   }) {
-    return _dio.post(
+    return _dio.post<T>(
       path,
       data: data,
       queryParameters: queryParameters,
@@ -83,13 +80,27 @@ class ApiClient {
     );
   }
 
-  Future<Response> put(
+  Future<Response<T>> put<T>(
     String path, {
     dynamic data,
     Map<String, dynamic>? queryParameters,
     Options? option,
   }) {
-    return _dio.put(
+    return _dio.put<T>(
+      path,
+      data: data,
+      queryParameters: queryParameters,
+      options: option,
+    );
+  }
+
+  Future<Response<T>> delete<T>(
+    String path, {
+    dynamic data,
+    Map<String, dynamic>? queryParameters,
+    Options? option,
+  }) {
+    return _dio.delete<T>(
       path,
       data: data,
       queryParameters: queryParameters,
@@ -98,27 +109,43 @@ class ApiClient {
   }
 }
 
-class _AuthInterceptor extends Interceptor {
+class AuthInterceptor extends Interceptor {
   static const String _tokenKey = "auth_token";
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
 
+  /// These are endpoint PATHS (relative) because baseUrl already includes `/api`
+  static const List<String> _publicPaths = [
+    // Auth public
+    "/auth/login",
+    "/auth/signup",
+    "/auth/forgot-password",
+    "/auth/verify-reset-code",
+    "/auth/reset-password",
+
+    // Public resources
+    "/packages",
+    "/providers",
+    "/categories",
+
+    // If batches is public
+    "/batches",
+  ];
+
+  bool _isPublic(RequestOptions options) {
+    final path = options.path;
+    return _publicPaths.any((p) => path == p || path.startsWith("$p/"));
+  }
+
   @override
-  void onRequest(
+  Future<void> onRequest(
     RequestOptions options,
     RequestInterceptorHandler handler,
   ) async {
-    // ✅ Public endpoints: token not required
-    final publicEndpoints = <String>[
-      ApiEndpoints.Login,
-      ApiEndpoints.Register,
-      ApiEndpoints.batches, // keep if your batches endpoint is public
-    ];
+    final requiresAuth = options.extra["requiresAuth"] == true;
 
-    final isPublic = publicEndpoints.any(
-      (endpoint) => options.path.startsWith(endpoint),
-    );
+    final shouldAttachToken = requiresAuth || !_isPublic(options);
 
-    if (!isPublic) {
+    if (shouldAttachToken) {
       final token = await _storage.read(key: _tokenKey);
       if (token != null && token.isNotEmpty) {
         options.headers["Authorization"] = "Bearer $token";
@@ -130,10 +157,6 @@ class _AuthInterceptor extends Interceptor {
 
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) {
-    // ✅ If unauthorized, clear token (session should also be cleared in logout)
-    if (err.response?.statusCode == 401) {
-      _storage.delete(key: _tokenKey);
-    }
     handler.next(err);
   }
 }

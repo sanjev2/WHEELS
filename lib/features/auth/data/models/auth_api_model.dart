@@ -11,7 +11,7 @@ class AuthApiModel {
 
   final String? profilePicture;
   final String? password;
-  final String? confirmPassword; // if your backend requires it; else keep null
+  final String? confirmPassword;
 
   AuthApiModel({
     this.authId,
@@ -32,7 +32,6 @@ class AuthApiModel {
       "contact": contact.trim(),
       "address": address.trim(),
       if (password != null && password!.isNotEmpty) "password": password,
-      // Only include confirmPassword if your backend DTO checks it
       if (confirmPassword != null && confirmPassword!.isNotEmpty)
         "confirmPassword": confirmPassword,
       "role": role,
@@ -40,15 +39,36 @@ class AuthApiModel {
   }
 
   factory AuthApiModel.fromJson(Map<String, dynamic> json) {
+    final dynamic userObj = json["user"];
+
+    String? id = (json["_id"] ?? json["id"] ?? json["authId"])?.toString();
+
+    if ((id == null || id.isEmpty) && userObj is Map) {
+      id = (userObj["_id"] ?? userObj["id"] ?? userObj["userId"])?.toString();
+    }
+
     return AuthApiModel(
-      authId: (json["_id"] ?? json["id"] ?? json["authId"])?.toString(),
-      name: (json["name"] ?? "").toString(),
-      email: (json["email"] ?? "").toString(),
-      contact: (json["contact"] ?? "").toString(),
-      address: (json["address"] ?? "").toString(),
-      role: (json["role"] ?? "user").toString(),
-      profilePicture: (json["profile_picture"] ?? json["profilePicture"])
-          ?.toString(),
+      authId: id,
+      name: (json["name"] ?? (userObj is Map ? userObj["name"] : "") ?? "")
+          .toString(),
+      email: (json["email"] ?? (userObj is Map ? userObj["email"] : "") ?? "")
+          .toString(),
+      contact:
+          (json["contact"] ?? (userObj is Map ? userObj["contact"] : "") ?? "")
+              .toString(),
+      address:
+          (json["address"] ?? (userObj is Map ? userObj["address"] : "") ?? "")
+              .toString(),
+      role:
+          (json["role"] ??
+                  (userObj is Map ? userObj["role"] : "user") ??
+                  "user")
+              .toString(),
+      profilePicture:
+          (json["profile_picture"] ??
+                  json["profilePicture"] ??
+                  (userObj is Map ? userObj["profile_picture"] : null))
+              ?.toString(),
     );
   }
 
@@ -63,7 +83,7 @@ class AuthApiModel {
       address: address,
       role: role,
       profilePicture: profilePicture,
-      isLoggedIn: false,
+      isLoggedIn: true,
     );
   }
 

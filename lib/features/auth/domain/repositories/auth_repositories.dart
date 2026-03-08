@@ -5,7 +5,10 @@ import '../entities/auth_entity.dart';
 abstract interface class IAuthRepository {
   Future<Either<Failure, AuthEntity>> login(String email, String password);
   Future<Either<Failure, bool>> register(AuthEntity user);
+
   Future<Either<Failure, void>> logout();
+
   Future<Either<Failure, AuthEntity>> getCurrentUser();
-  //
+
+  Future<Either<Failure, bool>> isUserLoggedIn();
 }

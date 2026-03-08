@@ -1,17 +1,24 @@
 import 'dart:async';
 import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import 'package:wheels_flutter/core/constants/app_constants.dart';
+import 'package:wheels_flutter/features/auth/presentation/providers/auth_providers.dart';
+import 'package:wheels_flutter/features/auth/presentation/state/auth_state.dart';
+import 'package:wheels_flutter/features/dashboard/dahsboard_page.dart';
 import 'package:wheels_flutter/features/onboarding/onboarding_page.dart';
 
-class SplashPage extends StatefulWidget {
+class SplashPage extends ConsumerStatefulWidget {
   const SplashPage({super.key});
 
   @override
-  State<SplashPage> createState() => _SplashPageState();
+  ConsumerState<SplashPage> createState() => _SplashPageState();
 }
 
-class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
+class _SplashPageState extends ConsumerState<SplashPage>
+    with TickerProviderStateMixin {
   Timer? _timer;
 
   late final AnimationController _spinController;
@@ -25,15 +32,12 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
   void initState() {
     super.initState();
 
-    // 🔄 Spinning wheel
     _spinController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1100),
     )..repeat();
-
     _spin = CurvedAnimation(parent: _spinController, curve: Curves.linear);
 
-    // 🌊 Pulse ring (BIM effect)
     _pulseController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1200),
@@ -49,15 +53,25 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
       end: 0.0,
     ).animate(CurvedAnimation(parent: _pulseController, curve: Curves.easeOut));
 
-    _navigateToOnboarding();
+    _startFlow();
   }
 
-  void _navigateToOnboarding() {
-    _timer = Timer(const Duration(seconds: 3), () {
+  void _startFlow() {
+    _timer = Timer(const Duration(seconds: 3), () async {
       if (!mounted) return;
+      await ref.read(authViewModelProvider.notifier).init();
+
+      if (!mounted) return;
+
+      final status = ref.read(authViewModelProvider).status;
+
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => const OnboardingPage()),
+        MaterialPageRoute(
+          builder: (_) => status == AuthStatus.authenticated
+              ? const DashboardPage()
+              : const OnboardingPage(),
+        ),
       );
     });
   }
@@ -87,20 +101,15 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
             return Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // 🟢 Static Logo (NO pulse, NO rotation)
                 Image.asset(
                   AppConstants.logoPath,
                   width: logoSize,
                   fit: BoxFit.contain,
                 ),
-
                 const SizedBox(height: 20),
-
-                // 🔄 Spinning Wheel + Pulse Ring
                 Stack(
                   alignment: Alignment.center,
                   children: [
-                    // Pulse ring (behind wheel)
                     Opacity(
                       opacity: _pulseOpacity.value,
                       child: Transform.scale(
@@ -118,8 +127,6 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
                         ),
                       ),
                     ),
-
-                    // Rotating wheel image
                     Transform.rotate(
                       angle: _spin.value * 2 * math.pi,
                       child: Image.asset(

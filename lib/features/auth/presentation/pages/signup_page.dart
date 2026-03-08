@@ -104,7 +104,6 @@ class _SignupPageState extends ConsumerState<SignupPage> {
     return null;
   }
 
-  // ✅ BACKEND LOGIC UNCHANGED
   Future<void> _register() async {
     FocusScope.of(context).unfocus();
 
@@ -178,8 +177,7 @@ class _SignupPageState extends ConsumerState<SignupPage> {
                   mainAxisAlignment:
                       MainAxisAlignment.start, // ✅ start from top
                   children: [
-                    SizedBox(height: isSmall ? 70 : 70), // ✅ small top gap
-                    // ✅ No logo here (as per your app), keep tight spacing
+                    SizedBox(height: isSmall ? 70 : 70),
                     Container(
                       padding: EdgeInsets.fromLTRB(
                         18,

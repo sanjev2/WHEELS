@@ -1,21 +1,26 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import 'package:wheels_flutter/core/constants/app_constants.dart';
 import 'package:wheels_flutter/app/theme/color.dart';
 import 'package:wheels_flutter/core/widgets/my_buttons.dart';
+
+import 'package:wheels_flutter/core/services/storage/onboarding_storage.dart';
+import 'package:wheels_flutter/features/auth/presentation/providers/auth_providers.dart';
 import 'package:wheels_flutter/features/auth/presentation/pages/login_pages.dart';
 
-class OnboardingPage extends StatefulWidget {
+class OnboardingPage extends ConsumerStatefulWidget {
   const OnboardingPage({super.key});
 
   @override
-  State<OnboardingPage> createState() => _OnboardingPageState();
+  ConsumerState<OnboardingPage> createState() => _OnboardingPageState();
 }
 
-class _OnboardingPageState extends State<OnboardingPage> {
+class _OnboardingPageState extends ConsumerState<OnboardingPage> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
 
-  final List<OnboardingContent> _pages = [
+  final List<OnboardingContent> _pages = const [
     OnboardingContent(
       image: AppConstants.onboarding1,
       title: 'Find service that\nfit your ride',
@@ -36,6 +41,19 @@ class _OnboardingPageState extends State<OnboardingPage> {
     ),
   ];
 
+  Future<void> _completeOnboarding() async {
+    await ref.read(onboardingStorageProvider).markSeen();
+
+    await ref.read(authViewModelProvider.notifier).init();
+
+    if (!mounted) return;
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (_) => const LoginPage()),
+    );
+  }
+
   void _goToNext() {
     if (_currentPage < _pages.length - 1) {
       _pageController.nextPage(
@@ -43,22 +61,12 @@ class _OnboardingPageState extends State<OnboardingPage> {
         curve: Curves.easeInOut,
       );
     } else {
-      _goToLogin();
+      _completeOnboarding();
     }
   }
 
   void _skipToLogin() {
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => const LoginPage()),
-    );
-  }
-
-  void _goToLogin() {
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => const LoginPage()),
-    );
+    _completeOnboarding();
   }
 
   Widget _buildDot(bool isActive) {
@@ -73,6 +81,12 @@ class _OnboardingPageState extends State<OnboardingPage> {
   }
 
   @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
@@ -81,7 +95,6 @@ class _OnboardingPageState extends State<OnboardingPage> {
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
           child: Column(
             children: [
-              // Skip button at top
               Align(
                 alignment: Alignment.topRight,
                 child: TextButton(
@@ -96,10 +109,8 @@ class _OnboardingPageState extends State<OnboardingPage> {
                   ),
                 ),
               ),
-
               const SizedBox(height: 20),
 
-              // Page View
               Expanded(
                 flex: 3,
                 child: PageView.builder(
@@ -109,11 +120,12 @@ class _OnboardingPageState extends State<OnboardingPage> {
                     setState(() => _currentPage = index);
                   },
                   itemBuilder: (context, index) {
+                    final page = _pages[index];
                     return Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Image.asset(
-                          _pages[index].image,
+                          page.image,
                           fit: BoxFit.contain,
                           height: MediaQuery.of(context).size.height * 0.3,
                         ),
@@ -123,7 +135,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                           child: Column(
                             children: [
                               Text(
-                                _pages[index].title,
+                                page.title,
                                 textAlign: TextAlign.center,
                                 style: const TextStyle(
                                   fontSize: 24,
@@ -134,7 +146,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                               ),
                               const SizedBox(height: 16),
                               Text(
-                                _pages[index].description,
+                                page.description,
                                 textAlign: TextAlign.center,
                                 style: const TextStyle(
                                   fontSize: 14,
@@ -151,7 +163,6 @@ class _OnboardingPageState extends State<OnboardingPage> {
                 ),
               ),
 
-              // Dots Indicator
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: List.generate(_pages.length, (index) {
@@ -164,7 +175,6 @@ class _OnboardingPageState extends State<OnboardingPage> {
 
               const SizedBox(height: 40),
 
-              // Next/Get Started Button (SMALLER SIZE)
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: MyButton(
@@ -172,7 +182,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                   text: _currentPage == _pages.length - 1
                       ? 'Get Started'
                       : 'Next',
-                  height: 48, // Smaller height
+                  height: 48,
                   width: double.infinity,
                 ),
               ),

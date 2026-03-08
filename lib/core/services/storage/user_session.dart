@@ -1,22 +1,10 @@
-// core/services/storage/user_session.dart
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
-final sharedPreferenceProvider = FutureProvider<SharedPreferences>((ref) async {
-  return await SharedPreferences.getInstance();
-});
+import 'package:wheels_flutter/core/services/storage/shared_pref_provider.dart';
 
 final userSessionServiceProvider = Provider<UserSessionService>((ref) {
-  final sharedPreferencesFuture = ref.watch(sharedPreferenceProvider);
-
-  if (sharedPreferencesFuture.hasValue &&
-      sharedPreferencesFuture.value != null) {
-    return UserSessionService(
-      sharedPreferences: sharedPreferencesFuture.value!,
-    );
-  }
-
-  throw Exception('SharedPreferences not initialized');
+  final prefs = ref.watch(sharedPreferencesProvider);
+  return UserSessionService(sharedPreferences: prefs);
 });
 
 class UserSessionService {
@@ -25,7 +13,6 @@ class UserSessionService {
   UserSessionService({required SharedPreferences sharedPreferences})
     : _sharedPreferences = sharedPreferences;
 
-  // Keys
   static const String _keyIsLoggedIn = "is_logged_in";
   static const String _keyUserId = "user_id";
   static const String _keyUserEmail = "user_email";
@@ -34,15 +21,12 @@ class UserSessionService {
   static const String _keyUserAddress = "user_address";
   static const String _keyProfilePicture = "profile_picture";
 
-  // Save user session
   Future<void> saveUserSession({
     required String userId,
     required String email,
     required String name,
     required String contact,
     required String address,
-
-    // ✅ NEW (optional, because register/login may not return it)
     String? profilePicture,
   }) async {
     await _sharedPreferences.setBool(_keyIsLoggedIn, true);
@@ -52,18 +36,17 @@ class UserSessionService {
     await _sharedPreferences.setString(_keyUserContact, contact);
     await _sharedPreferences.setString(_keyUserAddress, address);
 
-    // ✅ only set if provided (don’t overwrite existing with null)
-    if (profilePicture != null) {
+    if (profilePicture != null && profilePicture.isNotEmpty) {
       await _sharedPreferences.setString(_keyProfilePicture, profilePicture);
+    } else {
+      await _sharedPreferences.remove(_keyProfilePicture);
     }
   }
 
-  // ✅ NEW: update only profile picture (used after upload)
   Future<void> saveProfilePicture(String filename) async {
     await _sharedPreferences.setString(_keyProfilePicture, filename);
   }
 
-  // Clear session (logout)
   Future<void> clearSession() async {
     await _sharedPreferences.remove(_keyIsLoggedIn);
     await _sharedPreferences.remove(_keyUserId);
@@ -71,34 +54,29 @@ class UserSessionService {
     await _sharedPreferences.remove(_keyUserName);
     await _sharedPreferences.remove(_keyUserContact);
     await _sharedPreferences.remove(_keyUserAddress);
-    await _sharedPreferences.remove(_keyProfilePicture); // ✅ NEW
+    await _sharedPreferences.remove(_keyProfilePicture);
   }
 
-  // Check if user is logged in
   bool isLoggedIn() {
-    return _sharedPreferences.getBool(_keyIsLoggedIn) ?? false;
+    final ok = _sharedPreferences.getBool(_keyIsLoggedIn) ?? false;
+    final id = _sharedPreferences.getString(_keyUserId);
+    return ok && id != null && id.isNotEmpty;
   }
 
-  // Getters
   String? getUserId() => _sharedPreferences.getString(_keyUserId);
   String? getEmail() => _sharedPreferences.getString(_keyUserEmail);
   String? getName() => _sharedPreferences.getString(_keyUserName);
   String? getContact() => _sharedPreferences.getString(_keyUserContact);
   String? getAddress() => _sharedPreferences.getString(_keyUserAddress);
-
-  // ✅ NEW
   String? getProfilePicture() =>
       _sharedPreferences.getString(_keyProfilePicture);
 
-  // Get all user data
-  Map<String, String?> getUserData() {
-    return {
-      'userId': getUserId(),
-      'email': getEmail(),
-      'name': getName(),
-      'contact': getContact(),
-      'address': getAddress(),
-      'profilePicture': getProfilePicture(), // ✅ NEW
-    };
-  }
+  Map<String, String?> getUserData() => {
+    'userId': getUserId(),
+    'email': getEmail(),
+    'name': getName(),
+    'contact': getContact(),
+    'address': getAddress(),
+    'profilePicture': getProfilePicture(),
+  };
 }

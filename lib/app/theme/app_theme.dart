@@ -12,35 +12,29 @@ class AppTheme {
       seedColor: const Color(0xFF5A9C41),
       brightness: Brightness.light,
     ),
-
     appBarTheme: getAppBarTheme(),
     bottomNavigationBarTheme: getBottomNavigationTheme(),
     elevatedButtonTheme: getElevatedButtonTheme(),
     inputDecorationTheme: getInputDecorationTheme(),
+  );
 
-    textTheme: const TextTheme(
-      displayLarge: TextStyle(
-        fontFamily: 'Inter Bold',
-        fontSize: 28,
-        fontWeight: FontWeight.bold,
-        color: Color(0xFF5A9C41),
-      ),
-      titleLarge: TextStyle(
-        fontFamily: 'Inter Bold',
-        fontSize: 22,
-        fontWeight: FontWeight.w600,
-        color: Colors.black,
-      ),
-      bodyLarge: TextStyle(
-        fontFamily: 'Inter Regular',
-        fontSize: 16,
-        color: Colors.black87,
-      ),
-      bodyMedium: TextStyle(
-        fontFamily: 'Inter Regular',
-        fontSize: 14,
-        color: Colors.grey,
-      ),
+  static ThemeData darkTheme = ThemeData(
+    primaryColor: const Color(0xFF5A9C41),
+    scaffoldBackgroundColor: const Color(0xFF0B0F12),
+    colorScheme: ColorScheme.fromSeed(
+      seedColor: const Color(0xFF5A9C41),
+      brightness: Brightness.dark,
     ),
+    appBarTheme: getAppBarTheme().copyWith(
+      backgroundColor: const Color(0xFF0F172A),
+      foregroundColor: Colors.white,
+    ),
+    bottomNavigationBarTheme: getBottomNavigationTheme().copyWith(
+      backgroundColor: const Color(0xFF0F172A),
+      selectedItemColor: const Color(0xFF5A9C41),
+      unselectedItemColor: Colors.white70,
+    ),
+    elevatedButtonTheme: getElevatedButtonTheme(),
+    inputDecorationTheme: getInputDecorationTheme(),
   );
 }
